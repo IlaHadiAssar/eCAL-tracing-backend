@@ -67,7 +67,9 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
     publisher_span_contexts = {}
     publisher_end_times = {}
 
-    # Create publisher spans
+    from collections import defaultdict
+
+    # Create publisher spans — each clock tick gets its own trace
     print("\n=== Creating Publisher Spans ===")
     for pub_data in publisher_data:
         entity_id = pub_data['entity_id']
@@ -77,6 +79,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
         span_name = f"ecal.publish.{entity_id}"
 
+        # Each publish span starts a new trace (no shared parent)
         span = tracer.start_span(span_name, start_time=start_ns)
 
         span.set_attribute("ecal.entity_id", entity_id)
@@ -96,7 +99,6 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
     # Group subscriber spans by (topic_id, clock) and op_type
     # For each message: publish -> receive -> callback
-    from collections import defaultdict
     sub_groups = defaultdict(lambda: {OP_RECEIVE: [], OP_CALLBACK: []})
     for sub_data in subscriber_data:
         topic_id = sub_data.get('topic_id')
@@ -194,22 +196,38 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 def main():
     # Get paths relative to script location
     script_dir = Path(__file__).parent.parent
-    publisher_file = script_dir / "data" / "ecal_publisher_spans.json"
-    subscriber_file = script_dir / "data" / "ecal_subscriber_spans.json"
+    data_dir = script_dir / "data"
 
-    if not publisher_file.exists() or not subscriber_file.exists():
-        print(f"Error: JSON files not found")
-        print(f"Looking for: {publisher_file} and {subscriber_file}")
+    if not data_dir.exists():
+        print(f"Error: Data directory not found: {data_dir}")
         return
 
-    # Load data
-    print(f"Loading publisher spans from: {publisher_file}")
-    publisher_data = load_json_file(str(publisher_file))
+    # Load all per-process span files
+    publisher_data = []
+    subscriber_data = []
 
-    print(f"Loading subscriber spans from: {subscriber_file}")
-    subscriber_data = load_json_file(str(subscriber_file))
+    # Find all JSON files in data directory
+    json_files = sorted(data_dir.glob("*.json"))
 
-    print(f"Loaded {len(publisher_data)} publisher spans and {len(subscriber_data)} subscriber spans\n")
+    if not json_files:
+        print(f"Error: No JSON files found in {data_dir}")
+        return
+
+    print(f"Found {len(json_files)} process span files\n")
+
+    # Load and categorize spans by process type
+    for json_file in json_files:
+        print(f"Loading spans from: {json_file.name}")
+        spans = load_json_file(str(json_file))
+
+        if "publisher" in json_file.name:
+            publisher_data.extend(spans)
+        elif "subscriber" in json_file.name:
+            subscriber_data.extend(spans)
+
+        print(f"  Loaded {len(spans)} spans")
+
+    print(f"\nTotal: {len(publisher_data)} publisher spans and {len(subscriber_data)} subscriber spans\n")
 
     # Create spans
     create_spans_from_data(publisher_data, subscriber_data)
