@@ -65,6 +65,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
     # Map publisher spans by (entity_id, clock) for context propagation
     publisher_span_contexts = {}
+    publisher_end_times = {}
 
     # Create publisher spans
     print("\n=== Creating Publisher Spans ===")
@@ -87,6 +88,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
         # Store span context keyed by (entity_id, clock) for parent linking
         publisher_span_contexts[(entity_id, clock)] = span.get_span_context()
+        publisher_end_times[(entity_id, clock)] = end_ns
 
         span.end(end_time=end_ns)
 
@@ -115,12 +117,30 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
                 trace.NonRecordingSpan(publisher_span_contexts[parent_key])
             )
 
-        # Create receive spans as children of publisher
+        # Create wait + receive spans; wait is child of publisher, receive is child of wait
         for sub_data in spans_by_type[OP_RECEIVE]:
             entity_id = sub_data['entity_id']
-            span_name = f"ecal.receive.{entity_id}"
 
-            span = tracer.start_span(span_name, context=pub_ctx, start_time=sub_data['start_ns'])
+            # Create wait span (from publish end to receive start)
+            wait_ctx = pub_ctx  # fallback: wait is child of publisher
+            if parent_key in publisher_span_contexts:
+                pub_end_time = publisher_end_times[parent_key]
+                wait_span_name = f"ecal.wait.{entity_id}"
+                wait_span = tracer.start_span(wait_span_name, context=pub_ctx, start_time=pub_end_time)
+                wait_span.set_attribute("ecal.entity_id", entity_id)
+                wait_span.set_attribute("ecal.topic_id", topic_id)
+                wait_span.set_attribute("ecal.clock", clock)
+                wait_span.set_attribute("ecal.op_type", "wait")
+                wait_span.end(end_time=sub_data['start_ns'])
+
+                wait_ctx = trace.set_span_in_context(
+                    trace.NonRecordingSpan(wait_span.get_span_context())
+                )
+                print(f"Created wait span: {wait_span_name} [clock={clock}] -> child of publisher {topic_id}")
+
+            # Create receive span as child of wait span
+            span_name = f"ecal.receive.{entity_id}"
+            span = tracer.start_span(span_name, context=wait_ctx, start_time=sub_data['start_ns'])
 
             span.set_attribute("ecal.entity_id", entity_id)
             span.set_attribute("ecal.layer", sub_data.get('layer'))
@@ -136,7 +156,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
             matched = parent_key in publisher_span_contexts
             print(f"Created receive span: {span_name} [clock={clock}]" +
-                  (f" -> child of publisher {topic_id}" if matched else " (no matching publisher)"))
+                  (f" -> child of wait span" if matched else " (no matching publisher)"))
 
         # Create callback spans as children of receive
         for sub_data in spans_by_type[OP_CALLBACK]:
