@@ -36,7 +36,16 @@ def load_json_file(filepath: str) -> List[Dict[str, Any]]:
         return json.load(f)
 
 
-def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dict]) -> None:
+def build_metadata_lookup(metadata_list: List[Dict]) -> Dict[int, Dict[str, Any]]:
+    """Build a lookup from entity_id to metadata attributes"""
+    lookup = {}
+    for meta in metadata_list:
+        lookup[meta['entity_id']] = meta
+    return lookup
+
+
+def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dict],
+                           metadata_lookup: Dict[int, Dict[str, Any]]) -> None:
     """Create OpenTelemetry spans from eCAL publisher and subscriber data"""
 
     # Setup tracer provider with resource
@@ -77,7 +86,9 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         start_ns = pub_data['start_ns']
         end_ns = pub_data['end_ns']
 
-        span_name = f"ecal.publish.{entity_id}"
+        meta = metadata_lookup.get(entity_id, {})
+        topic_name = meta.get('topic_name', str(entity_id))
+        span_name = f"ecal.publish.{topic_name}"
 
         # Each publish span starts a new trace (no shared parent)
         span = tracer.start_span(span_name, start_time=start_ns)
@@ -88,6 +99,13 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         span.set_attribute("ecal.payload_size", pub_data.get('payload_size'))
         span.set_attribute("ecal.clock", clock)
         span.set_attribute("ecal.op_type", "send")
+        # Add metadata attributes
+        if meta:
+            span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
+            span.set_attribute("ecal.type_name", meta.get('type_name', ''))
+            span.set_attribute("ecal.encoding", meta.get('encoding', ''))
+            span.set_attribute("ecal.host_name", meta.get('host_name', ''))
+            span.set_attribute("ecal.direction", meta.get('direction', ''))
 
         # Store span context keyed by (entity_id, clock) for parent linking
         publisher_span_contexts[(entity_id, clock)] = span.get_span_context()
@@ -122,17 +140,26 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         # Create wait + receive spans; wait is child of publisher, receive is child of wait
         for sub_data in spans_by_type[OP_RECEIVE]:
             entity_id = sub_data['entity_id']
+            meta = metadata_lookup.get(entity_id, {})
+            sub_topic_name = meta.get('topic_name', str(entity_id))
 
             # Create wait span (from publish end to receive start)
             wait_ctx = pub_ctx  # fallback: wait is child of publisher
             if parent_key in publisher_span_contexts:
                 pub_end_time = publisher_end_times[parent_key]
-                wait_span_name = f"ecal.wait.{entity_id}"
+                wait_span_name = f"ecal.wait.{sub_topic_name}"
                 wait_span = tracer.start_span(wait_span_name, context=pub_ctx, start_time=pub_end_time)
                 wait_span.set_attribute("ecal.entity_id", entity_id)
                 wait_span.set_attribute("ecal.topic_id", topic_id)
                 wait_span.set_attribute("ecal.clock", clock)
                 wait_span.set_attribute("ecal.op_type", "wait")
+                # Add metadata attributes
+                if meta:
+                    wait_span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
+                    wait_span.set_attribute("ecal.type_name", meta.get('type_name', ''))
+                    wait_span.set_attribute("ecal.encoding", meta.get('encoding', ''))
+                    wait_span.set_attribute("ecal.host_name", meta.get('host_name', ''))
+                    wait_span.set_attribute("ecal.direction", meta.get('direction', ''))
                 wait_span.end(end_time=sub_data['start_ns'])
 
                 wait_ctx = trace.set_span_in_context(
@@ -141,7 +168,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
                 print(f"Created wait span: {wait_span_name} [clock={clock}] -> child of publisher {topic_id}")
 
             # Create receive span as child of wait span
-            span_name = f"ecal.receive.{entity_id}"
+            span_name = f"ecal.receive.{sub_topic_name}"
             span = tracer.start_span(span_name, context=wait_ctx, start_time=sub_data['start_ns'])
 
             span.set_attribute("ecal.entity_id", entity_id)
@@ -150,6 +177,13 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
             span.set_attribute("ecal.topic_id", topic_id)
             span.set_attribute("ecal.clock", clock)
             span.set_attribute("ecal.op_type", "receive")
+            # Add metadata attributes
+            if meta:
+                span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
+                span.set_attribute("ecal.type_name", meta.get('type_name', ''))
+                span.set_attribute("ecal.encoding", meta.get('encoding', ''))
+                span.set_attribute("ecal.host_name", meta.get('host_name', ''))
+                span.set_attribute("ecal.direction", meta.get('direction', ''))
 
             # Store for callback parenting
             receive_span_contexts[(topic_id, clock, entity_id)] = span.get_span_context()
@@ -163,7 +197,9 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         # Create callback spans as children of receive
         for sub_data in spans_by_type[OP_CALLBACK]:
             entity_id = sub_data['entity_id']
-            span_name = f"ecal.callback.{entity_id}"
+            meta = metadata_lookup.get(entity_id, {})
+            cb_topic_name = meta.get('topic_name', str(entity_id))
+            span_name = f"ecal.callback.{cb_topic_name}"
 
             recv_key = (topic_id, clock, entity_id)
             recv_ctx = None
@@ -180,6 +216,13 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
             span.set_attribute("ecal.topic_id", topic_id)
             span.set_attribute("ecal.clock", clock)
             span.set_attribute("ecal.op_type", "callback")
+            # Add metadata attributes
+            if meta:
+                span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
+                span.set_attribute("ecal.type_name", meta.get('type_name', ''))
+                span.set_attribute("ecal.encoding", meta.get('encoding', ''))
+                span.set_attribute("ecal.host_name", meta.get('host_name', ''))
+                span.set_attribute("ecal.direction", meta.get('direction', ''))
 
             span.end(end_time=sub_data['end_ns'])
 
@@ -202,9 +245,10 @@ def main():
         print(f"Error: Data directory not found: {data_dir}")
         return
 
-    # Load all per-process span files
+    # Load all per-process span and metadata files
     publisher_data = []
     subscriber_data = []
+    metadata_all = []
 
     # Find all JSON files in data directory
     json_files = sorted(data_dir.glob("*.json"))
@@ -213,24 +257,30 @@ def main():
         print(f"Error: No JSON files found in {data_dir}")
         return
 
-    print(f"Found {len(json_files)} process span files\n")
+    print(f"Found {len(json_files)} JSON files\n")
 
-    # Load and categorize spans by process type
+    # Load and categorize spans and metadata
     for json_file in json_files:
-        print(f"Loading spans from: {json_file.name}")
-        spans = load_json_file(str(json_file))
+        print(f"Loading: {json_file.name}")
+        data = load_json_file(str(json_file))
 
-        if "publisher" in json_file.name:
-            publisher_data.extend(spans)
+        if "topic_metadata" in json_file.name:
+            metadata_all.extend(data)
+            print(f"  Loaded {len(data)} metadata entries")
+        elif "publisher" in json_file.name:
+            publisher_data.extend(data)
+            print(f"  Loaded {len(data)} publisher spans")
         elif "subscriber" in json_file.name:
-            subscriber_data.extend(spans)
+            subscriber_data.extend(data)
+            print(f"  Loaded {len(data)} subscriber spans")
 
-        print(f"  Loaded {len(spans)} spans")
-
-    print(f"\nTotal: {len(publisher_data)} publisher spans and {len(subscriber_data)} subscriber spans\n")
+    # Build metadata lookup by entity_id
+    metadata_lookup = build_metadata_lookup(metadata_all)
+    print(f"\nMetadata entries: {len(metadata_lookup)} entities")
+    print(f"Total: {len(publisher_data)} publisher spans and {len(subscriber_data)} subscriber spans\n")
 
     # Create spans
-    create_spans_from_data(publisher_data, subscriber_data)
+    create_spans_from_data(publisher_data, subscriber_data, metadata_lookup)
 
 
 if __name__ == "__main__":
