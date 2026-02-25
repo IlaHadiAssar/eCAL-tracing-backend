@@ -1,3 +1,2 @@
-build/
 .venv/
-CMakeUserPresets.json
+src/ecal_tracing_backend.egg-info
