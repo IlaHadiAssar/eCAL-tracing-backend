@@ -38,10 +38,23 @@ def load_json_file(filepath: str) -> List[Dict[str, Any]]:
 
 def build_metadata_lookup(metadata_list: List[Dict]) -> Dict[int, Dict[str, Any]]:
     """Build a lookup from entity_id to metadata attributes"""
-    lookup = {}
-    for meta in metadata_list:
-        lookup[meta['entity_id']] = meta
-    return lookup
+    return {meta['entity_id']: meta for meta in metadata_list}
+
+
+def set_meta_attributes(span, meta: Dict[str, Any]) -> None:
+    """Set common eCAL metadata attributes on a span"""
+    if meta:
+        for key in ('topic_name', 'type_name', 'encoding', 'host_name', 'direction'):
+            span.set_attribute(f"ecal.{key}", meta.get(key, ''))
+
+
+def enrich_spans(spans: List[Dict], metadata_lookup: Dict[int, Dict[str, Any]],
+                 id_key: str = 'entity_id') -> None:
+    """Pre-merge metadata into each span record to avoid repeated lookups"""
+    for span in spans:
+        meta = metadata_lookup.get(span[id_key], {})
+        span['_meta'] = meta
+        span['_topic_name'] = meta.get('topic_name', str(span[id_key]))
 
 
 def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dict],
@@ -86,6 +99,10 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
     from collections import defaultdict
 
+    # Pre-enrich all spans with metadata
+    enrich_spans(publisher_data, metadata_lookup)
+    enrich_spans(subscriber_data, metadata_lookup)
+
     # Separate publisher data into send and shm_handshake spans
     send_spans = [p for p in publisher_data if p.get('op_type') == OP_SEND]
     shm_handshake_spans = [p for p in publisher_data if p.get('op_type') == OP_SHM_HANDSHAKE]
@@ -98,8 +115,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         start_ns = pub_data['start_ns']
         end_ns = pub_data['end_ns']
 
-        meta = metadata_lookup.get(entity_id, {})
-        topic_name = meta.get('topic_name', str(entity_id))
+        topic_name = pub_data['_topic_name']
         span_name = f"ecal.publish.{topic_name}"
 
         # Each publish span starts a new trace (no shared parent)
@@ -111,13 +127,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         span.set_attribute("ecal.payload_size", pub_data.get('payload_size'))
         span.set_attribute("ecal.clock", clock)
         span.set_attribute("ecal.op_type", "send")
-        # Add metadata attributes
-        if meta:
-            span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
-            span.set_attribute("ecal.type_name", meta.get('type_name', ''))
-            span.set_attribute("ecal.encoding", meta.get('encoding', ''))
-            span.set_attribute("ecal.host_name", meta.get('host_name', ''))
-            span.set_attribute("ecal.direction", meta.get('direction', ''))
+        set_meta_attributes(span, pub_data['_meta'])
 
         # Store span context keyed by (entity_id, clock) for parent linking
         publisher_span_contexts[(entity_id, clock)] = span.get_span_context()
@@ -135,8 +145,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         start_ns = hs_data['start_ns']
         end_ns = hs_data['end_ns']
 
-        meta = metadata_lookup.get(entity_id, {})
-        topic_name = meta.get('topic_name', str(entity_id))
+        topic_name = hs_data['_topic_name']
         span_name = f"ecal.shm_handshake.{topic_name}"
 
         # shm_handshake at clock C is a child of the send at clock C-1
@@ -155,13 +164,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         span.set_attribute("ecal.payload_size", hs_data.get('payload_size'))
         span.set_attribute("ecal.clock", clock)
         span.set_attribute("ecal.op_type", "shm_handshake")
-        # Add metadata attributes
-        if meta:
-            span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
-            span.set_attribute("ecal.type_name", meta.get('type_name', ''))
-            span.set_attribute("ecal.encoding", meta.get('encoding', ''))
-            span.set_attribute("ecal.host_name", meta.get('host_name', ''))
-            span.set_attribute("ecal.direction", meta.get('direction', ''))
+        set_meta_attributes(span, hs_data['_meta'])
 
         span.end(end_time=end_ns)
 
@@ -194,8 +197,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         # Create receive spans as children of publisher
         for sub_data in spans_by_type[OP_RECEIVE]:
             entity_id = sub_data['entity_id']
-            meta = metadata_lookup.get(entity_id, {})
-            sub_topic_name = meta.get('topic_name', str(entity_id))
+            sub_topic_name = sub_data['_topic_name']
 
             # Create receive span as child of publisher span
             span_name = f"ecal.receive.{sub_topic_name}"
@@ -207,13 +209,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
             span.set_attribute("ecal.topic_id", topic_id)
             span.set_attribute("ecal.clock", clock)
             span.set_attribute("ecal.op_type", "receive")
-            # Add metadata attributes
-            if meta:
-                span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
-                span.set_attribute("ecal.type_name", meta.get('type_name', ''))
-                span.set_attribute("ecal.encoding", meta.get('encoding', ''))
-                span.set_attribute("ecal.host_name", meta.get('host_name', ''))
-                span.set_attribute("ecal.direction", meta.get('direction', ''))
+            set_meta_attributes(span, sub_data['_meta'])
 
             # Store for callback parenting
             receive_span_contexts[(topic_id, clock, entity_id)] = span.get_span_context()
@@ -227,8 +223,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         # Create callback spans as children of receive
         for sub_data in spans_by_type[OP_CALLBACK]:
             entity_id = sub_data['entity_id']
-            meta = metadata_lookup.get(entity_id, {})
-            cb_topic_name = meta.get('topic_name', str(entity_id))
+            cb_topic_name = sub_data['_topic_name']
             span_name = f"ecal.callback.{cb_topic_name}"
 
             recv_key = (topic_id, clock, entity_id)
@@ -246,13 +241,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
             span.set_attribute("ecal.topic_id", topic_id)
             span.set_attribute("ecal.clock", clock)
             span.set_attribute("ecal.op_type", "callback")
-            # Add metadata attributes
-            if meta:
-                span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
-                span.set_attribute("ecal.type_name", meta.get('type_name', ''))
-                span.set_attribute("ecal.encoding", meta.get('encoding', ''))
-                span.set_attribute("ecal.host_name", meta.get('host_name', ''))
-                span.set_attribute("ecal.direction", meta.get('direction', ''))
+            set_meta_attributes(span, sub_data['_meta'])
 
             span.end(end_time=sub_data['end_ns'])
 
