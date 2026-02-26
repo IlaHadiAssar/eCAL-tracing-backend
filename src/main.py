@@ -71,6 +71,14 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
     OP_SEND = 0
     OP_RECEIVE = 1
     OP_CALLBACK = 2
+    OP_SHM_HANDSHAKE = 3
+
+    OP_TYPE_NAMES = {
+        OP_SEND: "send",
+        OP_RECEIVE: "receive",
+        OP_CALLBACK: "callback_execution",
+        OP_SHM_HANDSHAKE: "shm_handshake",
+    }
 
     # Map publisher spans by (entity_id, clock) for context propagation
     publisher_span_contexts = {}
@@ -78,9 +86,13 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
     from collections import defaultdict
 
-    # Create publisher spans — each clock tick gets its own trace
+    # Separate publisher data into send and shm_handshake spans
+    send_spans = [p for p in publisher_data if p.get('op_type') == OP_SEND]
+    shm_handshake_spans = [p for p in publisher_data if p.get('op_type') == OP_SHM_HANDSHAKE]
+
+    # Create publisher send spans — each clock tick gets its own trace
     print("\n=== Creating Publisher Spans ===")
-    for pub_data in publisher_data:
+    for pub_data in send_spans:
         entity_id = pub_data['entity_id']
         clock = pub_data['clock']
         start_ns = pub_data['start_ns']
@@ -114,6 +126,48 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         span.end(end_time=end_ns)
 
         print(f"Created publisher span: {span_name} [clock={clock}]")
+
+    # Create shm_handshake spans as children of the corresponding send span
+    print("\n=== Creating SHM Handshake Spans ===")
+    for hs_data in shm_handshake_spans:
+        entity_id = hs_data['entity_id']
+        clock = hs_data['clock']
+        start_ns = hs_data['start_ns']
+        end_ns = hs_data['end_ns']
+
+        meta = metadata_lookup.get(entity_id, {})
+        topic_name = meta.get('topic_name', str(entity_id))
+        span_name = f"ecal.shm_handshake.{topic_name}"
+
+        # shm_handshake at clock C is a child of the send at clock C-1
+        parent_key = (entity_id, clock - 1)
+        parent_ctx = None
+        if parent_key in publisher_span_contexts:
+            parent_ctx = trace.set_span_in_context(
+                trace.NonRecordingSpan(publisher_span_contexts[parent_key])
+            )
+
+        span = tracer.start_span(span_name, context=parent_ctx, start_time=start_ns)
+
+        span.set_attribute("ecal.entity_id", entity_id)
+        span.set_attribute("ecal.layer", hs_data.get('layer'))
+        span.set_attribute("ecal.process_id", hs_data.get('process_id'))
+        span.set_attribute("ecal.payload_size", hs_data.get('payload_size'))
+        span.set_attribute("ecal.clock", clock)
+        span.set_attribute("ecal.op_type", "shm_handshake")
+        # Add metadata attributes
+        if meta:
+            span.set_attribute("ecal.topic_name", meta.get('topic_name', ''))
+            span.set_attribute("ecal.type_name", meta.get('type_name', ''))
+            span.set_attribute("ecal.encoding", meta.get('encoding', ''))
+            span.set_attribute("ecal.host_name", meta.get('host_name', ''))
+            span.set_attribute("ecal.direction", meta.get('direction', ''))
+
+        span.end(end_time=end_ns)
+
+        matched = parent_key in publisher_span_contexts
+        print(f"Created shm_handshake span: {span_name} [clock={clock}]" +
+              (f" -> child of send [clock={clock - 1}]" if matched else " (no matching send)"))
 
     # Group subscriber spans by (topic_id, clock) and op_type
     # For each message: publish -> receive -> callback
