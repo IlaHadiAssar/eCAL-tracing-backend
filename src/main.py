@@ -18,14 +18,14 @@ def main():
     subscriber_data = []
     metadata_all = []
 
-    # Find all JSON files in data directory
-    json_files = sorted(data_dir.glob("*.json"))
+    # Find all JSONL files in data directory
+    json_files = sorted(data_dir.glob("*.jsonl"))
 
     if not json_files:
-        print(f"Error: No JSON files found in {data_dir}")
+        print(f"Error: No JSONL files found in {data_dir}")
         return
 
-    print(f"Found {len(json_files)} JSON files\n")
+    print(f"Found {len(json_files)} JSONL files\n")
 
     # Load and categorize spans and metadata
     for json_file in json_files:
