@@ -19,9 +19,14 @@ OP_TYPE_NAMES = {
 
 
 def load_json_file(filepath: str) -> List[Dict[str, Any]]:
-    """Load JSON file with span data"""
+    """Load JSONL file with span data (one JSON object per line)"""
+    results = []
     with open(filepath, 'r') as f:
-        return json.load(f)
+        for line in f:
+            line = line.strip()
+            if line:
+                results.append(json.loads(line))
+    return results
 
 
 def build_metadata_lookup(metadata_list: List[Dict]) -> Dict[int, Dict[str, Any]]:
@@ -109,8 +114,8 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
         topic_name = hs_data['_topic_name']
         span_name = f"ecal.shm_handshake.{topic_name}"
 
-        # shm_handshake at clock C is a child of the send at clock C-1
-        parent_key = (entity_id, clock - 1)
+        # shm_handshake is a child of the send at the same clock
+        parent_key = (entity_id, clock)
         parent_ctx = None
         if parent_key in publisher_span_contexts:
             parent_ctx = trace.set_span_in_context(
@@ -131,7 +136,7 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
         matched = parent_key in publisher_span_contexts
         print(f"Created shm_handshake span: {span_name} [clock={clock}]" +
-              (f" -> child of send [clock={clock - 1}]" if matched else " (no matching send)"))
+              (f" -> child of send [clock={clock}]" if matched else " (no matching send)"))
 
     # Group subscriber spans by (topic_id, clock) and op_type
     # For each message: publish -> receive -> callback
@@ -147,8 +152,8 @@ def create_spans_from_data(publisher_data: List[Dict], subscriber_data: List[Dic
 
     print("\n=== Creating Subscriber Spans ===")
     for (topic_id, clock), spans_by_type in sorted(sub_groups.items(), key=lambda x: x[0][1]):
-        # Look up matching publisher span (clock - 1 offset)
-        parent_key = (topic_id, clock - 1)
+        # Look up matching publisher span by same clock
+        parent_key = (topic_id, clock)
         pub_ctx = None
         if parent_key in publisher_span_contexts:
             pub_ctx = trace.set_span_in_context(
