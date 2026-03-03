@@ -28,11 +28,18 @@ class ConsoleSpanExporter(SpanExporter):
         return True
 
 
-def setup_tracer_provider(otlp_endpoint: str = "http://localhost:4318/v1/traces") -> tuple:
-    """Set up and return (tracer_provider, tracer) with console and OTLP exporters."""
+def setup_tracer_provider(otlp_endpoint: str = "http://localhost:4318/v1/traces",
+                          tracing_version: str = "unknown") -> tuple:
+    """Set up and return (tracer_provider, tracer) with console and OTLP exporters.
+
+    Args:
+        otlp_endpoint: OTLP HTTP endpoint URL.
+        tracing_version: eCAL tracing schema version from metadata.
+    """
     resource = Resource.create({
         "service.name": "ecal-tracing",
-        "service.version": "1.0.0"
+        "service.version": "1.0.0",
+        "ecal.tracing_version": tracing_version,
     })
 
     tracer_provider = TracerProvider(resource=resource)
