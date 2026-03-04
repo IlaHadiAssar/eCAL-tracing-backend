@@ -1,3 +1,4 @@
 .venv/
 src/ecal_tracing_backend.egg-info
 __pycache__
+data/*
