@@ -9,7 +9,7 @@ informed: eCAL Team
 # Implement tracing Instrumentation in eCAL's API
 
 ## Context and Problem Statement
-For a system to be observable, it must be instrumented: that is, code from the system’s components must emit signals, such as traces, metrics, and logs.
+For a system to be observable, it must be instrumented: that is, code from the system’s components must emit signals, such as traces.
 
 
 ## Considered Options
@@ -27,7 +27,7 @@ For a system to be observable, it must be instrumented: that is, code from the s
     - :heavy_check_mark: doesn't touch communication protocols
     - :heavy_check_mark: doesn't add external dependencies
     - :heavy_check_mark: doesn't require implementation in user projects
-    - :bad: slightly more complicated implementation
+    - :x: slightly more complicated implementation
 
 ## Decision Outcome
 
@@ -36,7 +36,7 @@ Chosen option: "Implementing Instrumentation into eCAL API", because this is the
 ### Consequences
 
 * Good, because it enables tracing eCAL communication
-* Bad, because it requires defining an eCAL specific trace format, which needs to be mapped for compatibillity with common tracing frontend's
+* Bad, because it adds overhead to eCAL communication
 
 ### Confirmation
 

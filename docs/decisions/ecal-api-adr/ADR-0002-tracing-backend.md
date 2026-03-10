@@ -14,8 +14,13 @@ Creating high amounts of Traces and uploading them to a frontend requires a lot 
 ## Considered Options
 
 * Implement custom solution inside eCAL with full tracing support
+    - :heavy_check_mark: all-in-one solution results in most simple code
+    - :x: adds heavy load on eCAL
 * Export minimal traces and handle logic on a tracing backend
-
+    - :heavy_check_mark: moves most of the heavy load from eCAL to a seperate application
+    - :heavy_check_mark: enables usage of external dependencies
+    - :x: overall more computation required
+    - :x: traces need to be mapped on the backend
 
 ## Decision Outcome
 
@@ -27,13 +32,4 @@ Chosen option: "Export minimal traces and handle logic on a tracing backend"
 
 ### Confirmation
 
-
-
-## Pros and Cons of the Options
-
-### Export minimal traces and handle logic on a tracing backend
-
-* Good, because all dependencies are "outsourced" from eCAL core project
-* Good, because overhead is minimized
-* Bad, because another repository has to be maintained
 ## More Information
