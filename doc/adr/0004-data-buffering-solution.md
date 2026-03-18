@@ -1,12 +1,13 @@
----
-status: accepted
-date:
-decision-makers: Ila Hadi-Assar
-consulted:
-informed:
----
+# 4. Data buffering solution
 
-# Use a vector with single datatype for buffering
+Date: 2026-03-17
+decision-makers: Ila Hadi-Assar
+consulted: Kerstin Keller
+informed:
+
+## Status
+
+Accepted
 
 ## Context and Problem Statement
 eCAL potentially produces thousands of traces every minute. Constantly sending these traces or writing them to a file will produce too much overhead, so traces need to be buffered and processed in batches.
@@ -15,16 +16,16 @@ eCAL potentially produces thousands of traces every minute. Constantly sending t
 ## Considered Options
 
 * buffering each type of span in its own buffer
-    - :heavy_check_mark: best memory efficiency
-    - :x: most boilerplate code
+    - ✅ best memory efficiency
+    - ❌ most boilerplate code
 * buffering all types of spans in a variant vector
-    - :heavy_check_mark: most flexible solution
-    - :x: adds most overhead both in memory and computation
+    - ✅ most flexible solution
+    - ❌ adds most overhead both in memory and computation
 * buffering a single unified spantype
-    - :heavy_check_mark: fastest computation
-    - :heavy_check_mark: minimal loss in memory efficiency
-    - :x: unused fields in unfied datatype
-    - :x: high maintenance
+    - ✅ fastest computation
+    - ✅ minimal loss in memory efficiency
+    - ❌ unused fields in unfied datatype
+    - ❌ high maintenance
 
 
 ## Decision Outcome

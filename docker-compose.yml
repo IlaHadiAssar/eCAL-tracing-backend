@@ -6,3 +6,11 @@ services:
       - "16686:16686"   # Jaeger UI
       - "4317:4317"     # OTLP gRPC ingest
       - "4318:4318"     # OTLP HTTP ingest
+  structurizr:
+    container_name: structurizr
+    image: structurizr/lite:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - "./structurizr:/usr/local/structurizr"
+      - "./doc/adr:/usr/local/structurizr/adr"

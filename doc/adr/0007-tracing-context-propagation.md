@@ -1,12 +1,10 @@
----
-status: accepted
-date: 03.03.2026
-decision-makers: Ila Hadi-Assar
-consulted:
-informed: eCAL Team
----
+# 7. Tracing context propagation
 
-# Use OpenTelemetry library for context propagation
+Date: 2026-03-18
+
+## Status
+
+Accepted
 
 ## Context and Problem Statement
 With context propagation, signals (traces) can be correlated with each other, regardless of where they are generated. Although not limited to tracing, context propagation allows traces to build causal information about a system across services that are arbitrarily distributed across process and network boundaries.
@@ -14,12 +12,12 @@ With context propagation, signals (traces) can be correlated with each other, re
 ## Considered Options
 
 * OpenTelemtry
-    - :heavy_check_mark: ready to use
-    - :heavy_check_mark: widely supported format for frontends
+    - ✅ ready to use
+    - ✅ widely supported format for frontends
 * Selfmade
-    - :heavy_check_mark: removes external dependencies
-    - :x: implementation takes time
-    - :x: needs to be tailored to specific frontend
+    - ✅ removes external dependencies
+    - ❌ implementation takes time
+    - ❌ needs to be tailored to specific frontend
 
 ## Decision Outcome
 

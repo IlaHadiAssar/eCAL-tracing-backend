@@ -1,0 +1,781 @@
+{
+  "configuration" : {
+    "scope" : "SoftwareSystem"
+  },
+  "description" : "Description",
+  "documentation" : {
+    "decisions" : [ {
+      "content" : "# 1. Record architecture decisions\n\nDate: 2026-03-03 \ndecision-makers: Ila Hadi-Assar \nconsulted: Kerstin Keller \ninformed: eCAL Team \n\n## Status\n\nSuperceded by [9. Record architecture decisions in structurizr](#9)\n\n## Context and Problem Statement\n\nArchitecture decisions aren't documented yet.\n\n\n## Considered Options\n\n* Confluence Page\n* MADR\n\n## Decision Outcome\n\nChosen option: \"MADR\", because its more suited and closer to code\n\n### Consequences\n\n* Good, because it adds documentation\n* Bad, because it takes time\n\n\n\n## Pros and Cons of the Options\n\n* Good, because easy adoption and close to the code\n\n## More Information",
+      "date" : "2026-03-03T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "1",
+      "links" : [ {
+        "description" : "Superceded by",
+        "id" : "9"
+      } ],
+      "status" : "Superseded",
+      "title" : "Record architecture decisions"
+    }, {
+      "content" : "# 2. Tracing instrumentation\n\nDate: 2026-03-03 \ndecision-makers: Ila Hadi-Assar \nconsulted: Kerstin Keller, Kristof Hannemann \ninformed: eCAL Team \n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nFor a system to be observable, it must be instrumented: that is, code from the system’s components must emit signals, such as traces.\n\n\n## Considered Options\n\n* **Implementing OpenTelemetry's Instrumentation API**\n    - ✅ ready to use\n    - ❌ adds external dependencies\n* **Implementing Instrumentation into User API**\n    - ✅ simple implementation on eCAL side\n    - ❌ not compatible with existing projects\n* **Implementing Instrumentation into protocol headers** (SHM,UDP,TCP)\n    - ✅  common approach\n    - ❌ might lead to issues with existing eCAL projects\n* **Implementing Instrumentation into eCAL API (internal send, receive, callback ... functions)**\n    - ✅ doesn't touch communication protocols\n    - ✅ doesn't add external dependencies\n    - ✅ doesn't require implementation in user projects\n    - ❌ slightly more complicated implementation\n\n## Decision Outcome\n\nChosen option: \"Implementing Instrumentation into eCAL API\", because this is the only option which doesnt: add dependencies (OpenTelemetry), change fundamantal functionality (protocol headers) or leave implementation for eCAL users.\n\n### Consequences\n\n* Good, because it enables tracing eCAL communication\n* Bad, because it adds overhead to eCAL communication\n\n### Confirmation\n\n\n## More Information",
+      "date" : "2026-03-03T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "2",
+      "status" : "Accepted",
+      "title" : "Tracing instrumentation"
+    }, {
+      "content" : "# 3. Tracing backend\n\nDate: 2026-03-17\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nCreating high amounts of Traces and uploading them to a frontend requires a lot of computation and adds external dependencies if you want Compliance with OpenTelemetry which is widely supported for tracing frontends\n\n## Considered Options\n\n* Implement custom solution inside eCAL with full tracing support\n    - ✅ all-in-one solution results in most simple code\n    - ❌ adds heavy load on eCAL\n* Export minimal traces and handle logic on a tracing backend\n    - ✅ moves most of the heavy load from eCAL to a seperate application\n    - ✅ enables usage of external dependencies\n    - ❌ overall more computation required\n    - ❌ traces need to be mapped on the backend\n\n## Decision Outcome\n\nChosen option: \"Export minimal traces and handle logic on a tracing backend\"\n### Consequences\n\n* Good, because overhead in eCAL is kept to a minimum\n* Bad, because another repository has to be maintained\n\n### Confirmation\n\n## More Information",
+      "date" : "2026-03-17T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "3",
+      "status" : "Accepted",
+      "title" : "Tracing backend"
+    }, {
+      "content" : "# 4. Data buffering solution\n\nDate: 2026-03-17\ndecision-makers: Ila Hadi-Assar\nconsulted: Kerstin Keller\ninformed:\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\neCAL potentially produces thousands of traces every minute. Constantly sending these traces or writing them to a file will produce too much overhead, so traces need to be buffered and processed in batches.\n\n\n## Considered Options\n\n* buffering each type of span in its own buffer\n    - ✅ best memory efficiency\n    - ❌ most boilerplate code\n* buffering all types of spans in a variant vector\n    - ✅ most flexible solution\n    - ❌ adds most overhead both in memory and computation\n* buffering a single unified spantype\n    - ✅ fastest computation\n    - ✅ minimal loss in memory efficiency\n    - ❌ unused fields in unfied datatype\n    - ❌ high maintenance\n\n\n## Decision Outcome\n\nChosen option: \"buffering a single shared datatype in one vector\", because the memory overhead of a shared datatype is minimal, since the spans only have 1 distinctive attribute.\n\n### Consequences\n\n* Good, because simple implementation and simple mapping in backend\n* Bad, because buffer flushing is less flexible with no distinction between publisher and subscriber spans\n\n## More Information\nThe decisions are based on theory. Benchmarks would give more accurate results, as too which method is most efficient.\n",
+      "date" : "2026-03-17T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "4",
+      "status" : "Accepted",
+      "title" : "Data buffering solution"
+    }, {
+      "content" : "# 5. Programming language\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context\n\nThe issue motivating this decision, and any context that influences or constrains the decision.\n\n## Decision\n\nThe change that we're proposing or have agreed to implement.\n\n## Consequences\n\nWhat becomes easier or more difficult to do and any risks introduced by the change that will need to be mitigated.\n",
+      "date" : "2026-03-18T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "5",
+      "status" : "Accepted",
+      "title" : "Programming language"
+    }, {
+      "content" : "# 6. Frontend\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nTraces need to be visualized to be able to analyse them. There are several frontends available mostly used for distributed tracing in Microservice Architectures.\n\n## Considered Options\n\n* Grafana+Tempo\n    - :heavy_check_mark: lots of analytic tools available\n    - :heavy_check_mark: widely used\n    - ❌ complex setup\n    - ❌ distribution isn't straight forward\n* Jaeger UI\n    - :heavy_check_mark: very simple setup\n    - :heavy_check_mark: easy distribution via docker-compose\n    - ❌ lacks tools for in depth analysis\n\n## Decision Outcome\n\nChosen option: \"Jaeger UI\", because the setup is much simpler.\n\n### Consequences\n\n* Good, because anyone can setup a tracing frontend by simply running a docker-compose file\n* Bad, because no in depth analysis possible in frontend\n\n## More Information\nA switch to Grafana+Tempo might happen in the future if more analytic tools are needed\n",
+      "date" : "2026-03-18T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "6",
+      "status" : "Accepted",
+      "title" : "Frontend"
+    }, {
+      "content" : "# 7. Tracing context propagation\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nWith context propagation, signals (traces) can be correlated with each other, regardless of where they are generated. Although not limited to tracing, context propagation allows traces to build causal information about a system across services that are arbitrarily distributed across process and network boundaries.\n\n## Considered Options\n\n* OpenTelemtry\n    - ✅ ready to use\n    - ✅ widely supported format for frontends\n* Selfmade\n    - ✅ removes external dependencies\n    - ❌ implementation takes time\n    - ❌ needs to be tailored to specific frontend\n\n## Decision Outcome\n\nChosen option: \"OpenTelemtry\", because most simply implementation and widely accepted format.\n\n### Consequences\n\n* Good, because resulting traces are supported by many frontends and it saves lots of time\n\n### Confirmation\n\n## More Information\n",
+      "date" : "2026-03-18T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "7",
+      "status" : "Accepted",
+      "title" : "Tracing context propagation"
+    }, {
+      "content" : "# 8. Record software architecture\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context\n\nThe issue motivating this decision, and any context that influences or constrains the decision.\n\n## Decision\n\nThe change that we're proposing or have agreed to implement.\n\n## Consequences\n\nWhat becomes easier or more difficult to do and any risks introduced by the change that will need to be mitigated.\n",
+      "date" : "2026-03-18T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "8",
+      "status" : "Accepted",
+      "title" : "Record software architecture"
+    }, {
+      "content" : "# 9. Record architecture decisions in structurizr\n\nDate: 2026-03-18\n\n## Status\n\nSupercedes [1. Record architecture decisions](#1)\n\nAccepted\n\n## Context and Problem Statement\n\nArchitecture decisions aren't documented yet.\n\n\n## Considered Options\n\n* Confluence Page\n    - ✅ most flexible\n    - ❌ not a dedicated solution for software architecture\n    - ❌ often overlooked\n* MADR\n    - ✅ quick and simple format\n    - ✅ close to code so it wont be overlooked as much\n    - ❌ doesnt include other architecture artifects\n* Structurizr\n    - ✅ dedicated solution for all architecture needs\n    - ✅ GUI makes things more visible\n    - ✅ ADRs stay close to code\n    - ✅/❌ adr-tools is now required to create adrs \n    - ❌ more complicated usage\n\n\n## Decision Outcome\n\nChosen option: \"Structurizr\", because it offers more a structurized approach for Software Architecture.\nIncluding a GUI for ADRs as well as Software Diagrams.\n\n### Consequences\n\n* Good, because it adds documentation\n* Neutral, the use of adr-tools for creating adrs is now pretty much necessary\n* Bad, because it takes time\n\n\n\n## Pros and Cons of the Options\n\n* Good, because easy adoption and close to the code\n\n## More Information\n",
+      "date" : "2026-03-18T00:00:00Z",
+      "format" : "Markdown",
+      "id" : "9",
+      "links" : [ {
+        "description" : "Supercedes",
+        "id" : "1"
+      } ],
+      "status" : "Supercedes",
+      "title" : "Record architecture decisions in structurizr"
+    } ]
+  },
+  "id" : 1,
+  "lastModifiedDate" : "2026-03-18T12:04:48Z",
+  "model" : {
+    "people" : [ {
+      "description" : "Operates and monitors the system",
+      "id" : "1",
+      "name" : "Developer/DevOps",
+      "properties" : {
+        "structurizr.dsl.identifier" : "dev"
+      },
+      "relationships" : [ {
+        "description" : "Configures and operates via CLI",
+        "destinationId" : "3",
+        "id" : "43",
+        "sourceId" : "1",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Views traces via UI",
+        "destinationId" : "40",
+        "id" : "44",
+        "sourceId" : "1",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "description" : "Event Communication Abstraction Layer - generates publisher/subscriber spans and topic metadata",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "eCAL Core",
+      "properties" : {
+        "structurizr.dsl.identifier" : "ecal"
+      },
+      "relationships" : [ {
+        "description" : "Produces span/metadata JSON files",
+        "destinationId" : "4",
+        "id" : "41",
+        "sourceId" : "2",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Produces span/metadata JSON files",
+        "destinationId" : "3",
+        "id" : "42",
+        "linkedRelationshipId" : "41",
+        "sourceId" : "2"
+      } ],
+      "tags" : "Element,Software System,External System"
+    }, {
+      "containers" : [ {
+        "components" : [ {
+          "description" : "Discovers span and metadata JSONL files using glob patterns",
+          "documentation" : { },
+          "id" : "5",
+          "name" : "File Discoverer",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.collector.fileDiscoverer"
+          },
+          "relationships" : [ {
+            "description" : "Provides file paths",
+            "destinationId" : "6",
+            "id" : "8",
+            "sourceId" : "5",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Python glob"
+        }, {
+          "description" : "Reads and parses JSON/JSONL files from filesystem",
+          "documentation" : { },
+          "id" : "6",
+          "name" : "File Reader",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.collector.fileReader"
+          },
+          "relationships" : [ {
+            "description" : "Provides parsed records",
+            "destinationId" : "7",
+            "id" : "9",
+            "sourceId" : "6",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Python json"
+        }, {
+          "description" : "Validates span and metadata schema before processing",
+          "documentation" : { },
+          "id" : "7",
+          "name" : "Data Validator",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.collector.dataValidator"
+          },
+          "tags" : "Element,Component",
+          "technology" : "Python"
+        } ],
+        "description" : "Discovers and loads span/metadata JSONL files from data directory",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Data Collector",
+        "properties" : {
+          "structurizr.dsl.identifier" : "backend.collector"
+        },
+        "relationships" : [ {
+          "description" : "Supplies eCAL span data",
+          "destinationId" : "10",
+          "id" : "37",
+          "sourceId" : "4",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "components" : [ {
+          "description" : "Loads span and metadata JSONL files",
+          "documentation" : { },
+          "id" : "11",
+          "name" : "JSON File Loader",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.mapper.fileLoader"
+          },
+          "relationships" : [ {
+            "description" : "Decodes operation types",
+            "destinationId" : "13",
+            "id" : "16",
+            "sourceId" : "11",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Provides raw data",
+            "destinationId" : "12",
+            "id" : "17",
+            "sourceId" : "11",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Python"
+        }, {
+          "description" : "Constructs lookup maps of topic metadata",
+          "documentation" : { },
+          "id" : "12",
+          "name" : "Metadata Builder",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.mapper.metadataBuilder"
+          },
+          "relationships" : [ {
+            "description" : "Supplies metadata context",
+            "destinationId" : "14",
+            "id" : "18",
+            "sourceId" : "12",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Python"
+        }, {
+          "description" : "Decodes eCAL enums: operation types, directions, transport layers",
+          "documentation" : { },
+          "id" : "13",
+          "name" : "Enum Decoder",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.mapper.enumDecoder"
+          },
+          "tags" : "Element,Component",
+          "technology" : "Python"
+        }, {
+          "description" : "Maps eCAL spans to OpenTelemetry with context propagation",
+          "documentation" : { },
+          "id" : "14",
+          "name" : "Span Creator",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.mapper.spanCreator"
+          },
+          "relationships" : [ {
+            "description" : "Links span contexts",
+            "destinationId" : "15",
+            "id" : "19",
+            "sourceId" : "14",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Python"
+        }, {
+          "description" : "Maintains context links: publish → receive → callback",
+          "documentation" : { },
+          "id" : "15",
+          "name" : "Context Propagator",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.mapper.contextPropagator"
+          },
+          "relationships" : [ {
+            "description" : "Adds parent/child references",
+            "destinationId" : "14",
+            "id" : "20",
+            "sourceId" : "15",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "Python"
+        } ],
+        "description" : "Maps eCAL publisher/subscriber spans to OpenTelemetry trace model with context propagation",
+        "documentation" : { },
+        "id" : "10",
+        "name" : "Span Mapper",
+        "properties" : {
+          "structurizr.dsl.identifier" : "backend.mapper"
+        },
+        "relationships" : [ {
+          "description" : "Creates OTel spans with context",
+          "destinationId" : "21",
+          "id" : "38",
+          "sourceId" : "10",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container,Core Logic",
+        "technology" : "Python"
+      }, {
+        "components" : [ {
+          "description" : "Creates OTel Resource with service metadata",
+          "documentation" : { },
+          "id" : "22",
+          "name" : "Resource Factory",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.tracer.resourceFactory"
+          },
+          "relationships" : [ {
+            "description" : "Configures with service metadata",
+            "destinationId" : "23",
+            "id" : "27",
+            "sourceId" : "22",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "OpenTelemetry SDK"
+        }, {
+          "description" : "Instantiates TracerProvider with resource",
+          "documentation" : { },
+          "id" : "23",
+          "name" : "Tracer Factory",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.tracer.tracerFactory"
+          },
+          "relationships" : [ {
+            "description" : "Registers span processors",
+            "destinationId" : "26",
+            "id" : "28",
+            "sourceId" : "23",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "OpenTelemetry SDK"
+        }, {
+          "description" : "Debug exporter that prints spans to console",
+          "documentation" : { },
+          "id" : "24",
+          "name" : "Console Exporter",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.tracer.consoleExporter"
+          },
+          "tags" : "Element,Component",
+          "technology" : "Python/Custom"
+        }, {
+          "description" : "Exports spans to Jaeger via OTLP HTTP",
+          "documentation" : { },
+          "id" : "25",
+          "name" : "OTLP HTTP Exporter",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.tracer.otlpExporter"
+          },
+          "tags" : "Element,Component",
+          "technology" : "OpenTelemetry SDK"
+        }, {
+          "description" : "Manages SimpleSpanProcessor and BatchSpanProcessor",
+          "documentation" : { },
+          "id" : "26",
+          "name" : "Processor Manager",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.tracer.processorManager"
+          },
+          "relationships" : [ {
+            "description" : "Routes spans to console",
+            "destinationId" : "24",
+            "id" : "29",
+            "sourceId" : "26",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Routes spans to OTLP",
+            "destinationId" : "25",
+            "id" : "30",
+            "sourceId" : "26",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "OpenTelemetry SDK"
+        } ],
+        "description" : "Manages OpenTelemetry SDK and builds unified trace hierarchy",
+        "documentation" : { },
+        "id" : "21",
+        "name" : "Tracer Provider",
+        "properties" : {
+          "structurizr.dsl.identifier" : "backend.tracer"
+        },
+        "relationships" : [ {
+          "description" : "Sends trace data",
+          "destinationId" : "31",
+          "id" : "39",
+          "sourceId" : "21",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container,Core Logic",
+        "technology" : "OpenTelemetry Python SDK"
+      }, {
+        "components" : [ {
+          "description" : "Batches spans for efficient export to reduce overhead",
+          "documentation" : { },
+          "id" : "32",
+          "name" : "Batch Processor",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.exporter.batchProcessor"
+          },
+          "relationships" : [ {
+            "description" : "Sends batch",
+            "destinationId" : "33",
+            "id" : "35",
+            "sourceId" : "32",
+            "tags" : "Relationship"
+          }, {
+            "description" : "Sends copy for debug",
+            "destinationId" : "34",
+            "id" : "36",
+            "sourceId" : "32",
+            "tags" : "Relationship"
+          } ],
+          "tags" : "Element,Component",
+          "technology" : "OpenTelemetry SDK"
+        }, {
+          "description" : "Sends batched span data via HTTP/JSON to Jaeger",
+          "documentation" : { },
+          "id" : "33",
+          "name" : "HTTP Transport",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.exporter.httpTransport"
+          },
+          "tags" : "Element,Component",
+          "technology" : "OpenTelemetry OTLP HTTP"
+        }, {
+          "description" : "Routes spans to console for real-time debugging",
+          "documentation" : { },
+          "id" : "34",
+          "name" : "Console Debugger",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.exporter.consoleDebugger"
+          },
+          "tags" : "Element,Component",
+          "technology" : "Python/Custom"
+        } ],
+        "description" : "Exports traces to Jaeger via OTLP HTTP protocol",
+        "documentation" : { },
+        "id" : "31",
+        "name" : "OTLP Exporter",
+        "properties" : {
+          "structurizr.dsl.identifier" : "backend.exporter"
+        },
+        "tags" : "Element,Container",
+        "technology" : "OpenTelemetry OTLP HTTP Exporter"
+      } ],
+      "description" : "OpenTelemetry tracing backend for eCAL pub/sub instrumentation",
+      "documentation" : { },
+      "id" : "3",
+      "name" : "eCAL Tracing Backend",
+      "properties" : {
+        "structurizr.dsl.identifier" : "backend"
+      },
+      "relationships" : [ {
+        "description" : "Exports traces on port 4318",
+        "destinationId" : "40",
+        "id" : "45",
+        "sourceId" : "3",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "Distributed tracing backend - receives and visualizes traces",
+      "documentation" : { },
+      "id" : "40",
+      "name" : "Jaeger",
+      "properties" : {
+        "structurizr.dsl.identifier" : "jaeger"
+      },
+      "tags" : "Element,Software System,External System"
+    } ]
+  },
+  "name" : "Name",
+  "properties" : {
+    "structurizr.inspection.error" : "23",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "componentViews" : [ {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "10",
+      "description" : "Shows how the Span Mapper breaks down JSON loading, metadata building, enum decoding, and OpenTelemetry span creation with context propagation",
+      "elements" : [ {
+        "id" : "11",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "12",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "13",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "14",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "15",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "MapperComponents",
+      "name" : "Component View: eCAL Tracing Backend - Span Mapper",
+      "order" : 3,
+      "relationships" : [ {
+        "id" : "16"
+      }, {
+        "id" : "17"
+      }, {
+        "id" : "18"
+      }, {
+        "id" : "19"
+      }, {
+        "id" : "20"
+      } ],
+      "title" : "Span Mapper - Component Diagram"
+    }, {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "21",
+      "description" : "Shows how the Tracer Provider manages OpenTelemetry SDK initialization, exporters, and span processors for both console and OTLP output",
+      "elements" : [ {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "23",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "24",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "25",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "26",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "TracerComponents",
+      "name" : "Component View: eCAL Tracing Backend - Tracer Provider",
+      "order" : 4,
+      "relationships" : [ {
+        "id" : "27"
+      }, {
+        "id" : "28"
+      }, {
+        "id" : "29"
+      }, {
+        "id" : "30"
+      } ],
+      "title" : "Tracer Provider - Component Diagram"
+    }, {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "4",
+      "description" : "Shows how the Data Collector discovers, reads, and validates JSONL files for processing",
+      "elements" : [ {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "7",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "CollectorComponents",
+      "name" : "Component View: eCAL Tracing Backend - Data Collector",
+      "order" : 5,
+      "relationships" : [ {
+        "id" : "8"
+      }, {
+        "id" : "9"
+      } ],
+      "title" : "Data Collector - Component Diagram"
+    }, {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "containerId" : "31",
+      "description" : "Shows how the OTLP Exporter batches spans and sends them to Jaeger via HTTP while also debugging to console",
+      "elements" : [ {
+        "id" : "32",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "33",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "34",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalContainerBoundariesVisible" : false,
+      "key" : "ExporterComponents",
+      "name" : "Component View: eCAL Tracing Backend - OTLP Exporter",
+      "order" : 6,
+      "relationships" : [ {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      } ],
+      "title" : "OTLP Exporter - Component Diagram"
+    } ],
+    "configuration" : {
+      "branding" : { },
+      "lastSavedView" : "SystemContext",
+      "styles" : {
+        "elements" : [ {
+          "color" : "#65c0f5",
+          "fontSize" : 12,
+          "shape" : "RoundedBox",
+          "stroke" : "#3c7fc0",
+          "strokeWidth" : 2,
+          "tag" : "Component"
+        }, {
+          "color" : "#85bbf0",
+          "stroke" : "#3c7fc0",
+          "strokeWidth" : 4,
+          "tag" : "Core Logic"
+        }, {
+          "color" : "#438dd5",
+          "fontSize" : 14,
+          "icon" : "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/python.svg",
+          "shape" : "RoundedBox",
+          "stroke" : "#3c7fc0",
+          "strokeWidth" : 3,
+          "tag" : "Element"
+        }, {
+          "color" : "#999999",
+          "fontSize" : 14,
+          "stroke" : "#666666",
+          "tag" : "External System"
+        }, {
+          "color" : "#08427b",
+          "fontSize" : 14,
+          "shape" : "Person",
+          "stroke" : "#073461",
+          "tag" : "Person"
+        } ],
+        "relationships" : [ {
+          "dashed" : false,
+          "fontSize" : 12,
+          "tag" : "Relationship",
+          "thickness" : 2
+        } ]
+      },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "description" : "Container diagram showing data flow from file loading through span mapping to Jaeger export",
+      "elements" : [ {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "10",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "31",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "Containers",
+      "name" : "Container View: eCAL Tracing Backend",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "39"
+      }, {
+        "id" : "41"
+      } ],
+      "softwareSystemId" : "3",
+      "title" : "eCAL Tracing Backend - Container Architecture"
+    } ],
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "description" : "Context diagram showing eCAL tracing backend, eCAL Core, and Jaeger",
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "40",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "SystemContext",
+      "name" : "System Context View: eCAL Tracing Backend",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "42"
+      }, {
+        "id" : "43"
+      }, {
+        "id" : "44"
+      }, {
+        "id" : "45"
+      } ],
+      "softwareSystemId" : "3",
+      "title" : "eCAL Tracing Backend - System Context"
+    } ]
+  }
+}

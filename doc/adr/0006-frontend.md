@@ -1,12 +1,10 @@
----
-status: accepted
-date: 03.03.2026
-decision-makers: Ila Hadi-Assar
-consulted: Kristof Hannemann
-informed: eCAL Team
----
+# 6. Frontend
 
-# Use Jaeger UI frontend
+Date: 2026-03-18
+
+## Status
+
+Accepted
 
 ## Context and Problem Statement
 Traces need to be visualized to be able to analyse them. There are several frontends available mostly used for distributed tracing in Microservice Architectures.
@@ -16,12 +14,12 @@ Traces need to be visualized to be able to analyse them. There are several front
 * Grafana+Tempo
     - :heavy_check_mark: lots of analytic tools available
     - :heavy_check_mark: widely used
-    - :x: complex setup
-    - :x: distribution isn't straight forward
+    - ❌ complex setup
+    - ❌ distribution isn't straight forward
 * Jaeger UI
     - :heavy_check_mark: very simple setup
     - :heavy_check_mark: easy distribution via docker-compose
-    - :x: lacks tools for in depth analysis
+    - ❌ lacks tools for in depth analysis
 
 ## Decision Outcome
 

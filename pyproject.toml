@@ -12,6 +12,7 @@ dependencies = [
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp",
     "pre-commit",
+    "adr-tools-python",
 ]
 
 [tool.setuptools.packages.find]

@@ -1,12 +1,13 @@
----
-status: accepted
-date: 03.03.2026
+# 1. Record architecture decisions
+
+Date: 2026-03-03
 decision-makers: Ila Hadi-Assar
 consulted: Kerstin Keller
 informed: eCAL Team
----
 
-# Adopt ADR
+## Status
+
+Superceded by [9. Record architecture decisions in structurizr](0009-record-architecture-decisions-in-structurizr.md)
 
 ## Context and Problem Statement
 
