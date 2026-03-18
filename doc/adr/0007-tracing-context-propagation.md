@@ -1,6 +1,9 @@
 # 7. Tracing context propagation
 
 Date: 2026-03-18
+decision-makers: Ila Hadi-Assar
+consulted: Kerstin Keller
+informed: eCAL Team
 
 ## Status
 

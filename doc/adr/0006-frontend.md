@@ -1,6 +1,10 @@
 # 6. Frontend
 
 Date: 2026-03-18
+decision-makers: Ila Hadi-Assar
+consulted: Kristof Hannemann
+informed: eCAL Team
+
 
 ## Status
 
@@ -12,13 +16,13 @@ Traces need to be visualized to be able to analyse them. There are several front
 ## Considered Options
 
 * Grafana+Tempo
-    - :heavy_check_mark: lots of analytic tools available
-    - :heavy_check_mark: widely used
+    - ✅ lots of analytic tools available
+    - ✅ widely used
     - ❌ complex setup
     - ❌ distribution isn't straight forward
 * Jaeger UI
-    - :heavy_check_mark: very simple setup
-    - :heavy_check_mark: easy distribution via docker-compose
+    - ✅ very simple setup
+    - ✅ easy distribution via docker-compose
     - ❌ lacks tools for in depth analysis
 
 ## Decision Outcome

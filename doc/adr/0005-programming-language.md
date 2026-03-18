@@ -1,19 +1,36 @@
 # 5. Programming language
 
 Date: 2026-03-18
+decision-makers: Ila Hadi-Assar
+consulted: Kerstin Keller
+informed: eCAL Team
 
 ## Status
 
 Accepted
 
-## Context
+## Context and Problem Statement
+For the implementation of the tracing backend outside of eCAL there were no strict guidelines, which defined the programming language.
 
-The issue motivating this decision, and any context that influences or constrains the decision.
 
-## Decision
+## Considered Options
 
-The change that we're proposing or have agreed to implement.
+* C++
+    - ✅ most likely more efficient
+    - ❌ OpenTelemetry library not available as package
+* Python
+    - ✅ easy depency management
+    - ✅ faster results
+    - ❌ likely less efficient
 
-## Consequences
+## Decision Outcome
 
-What becomes easier or more difficult to do and any risks introduced by the change that will need to be mitigated.
+Chosen option: "Python", because it's simpler and faster to implement
+
+### Consequences
+
+* Good, because it allows easy support of the OpenTelemetry library
+* Bad, because there might be some performance drawbacks
+
+## More Information
+Performance drawbacks aren't a huge concern since the tracing backend doesn't interfere with eCAL's core communication.

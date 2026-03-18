@@ -1,6 +1,9 @@
 # 9. Record architecture decisions in structurizr
 
 Date: 2026-03-18
+decision-makers: Ila Hadi-Assar
+consulted: Kristof Hannemann
+informed: eCAL Team
 
 ## Status
 
@@ -41,11 +44,5 @@ Including a GUI for ADRs as well as Software Diagrams.
 * Good, because it adds documentation
 * Neutral, the use of adr-tools for creating adrs is now pretty much necessary
 * Bad, because it takes time
-
-
-
-## Pros and Cons of the Options
-
-* Good, because easy adoption and close to the code
 
 ## More Information

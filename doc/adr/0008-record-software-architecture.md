@@ -1,19 +1,37 @@
 # 8. Record software architecture
 
 Date: 2026-03-18
+decision-makers: Ila Hadi-Assar
+consulted: Kristof Hannemann
+informed: eCAL Team
 
 ## Status
 
 Accepted
 
-## Context
+## Context and Problem Statement
 
-The issue motivating this decision, and any context that influences or constrains the decision.
+There are no architecture diagrams yet 
 
-## Decision
+## Considered Options
 
-The change that we're proposing or have agreed to implement.
+* Plant-UML
+    - ✅ most common approach
+    - ❌ doesnt allow zooming through layers
+* Structurizr
+    - ✅ zooming through layers
+    - ✅ GUI with useful features such as depency graphs
+    - ✅ ADRs included in GUI
+    - ❌ cant import Plant-UML diagrams
 
-## Consequences
 
-What becomes easier or more difficult to do and any risks introduced by the change that will need to be mitigated.
+## Decision Outcome
+
+Chosen option: "Structurizr", because it offers more value to this project
+
+### Consequences
+
+* Good, well organized software architecture through diagrams and adrs in one tool
+* Bad, integrating other parts of architecture will be difficult since there is no Plant-UML support
+
+## More Information
