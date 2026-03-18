@@ -2,3 +2,8 @@
 src/ecal_tracing_backend.egg-info
 __pycache__
 data/*
+
+# Structurizr Lite runtime artifacts
+structurizr/.structurizr/
+structurizr/adr/
+structurizr/decisions/
