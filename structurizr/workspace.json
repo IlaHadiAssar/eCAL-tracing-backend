@@ -1,11 +1,9 @@
 {
-  "configuration" : {
-    "scope" : "SoftwareSystem"
-  },
+  "configuration" : { },
   "description" : "Description",
   "documentation" : {
     "decisions" : [ {
-      "content" : "# 1. Record architecture decisions\n\nDate: 2026-03-03 \ndecision-makers: Ila Hadi-Assar \nconsulted: Kerstin Keller \ninformed: eCAL Team \n\n## Status\n\nSuperceded by [9. Record architecture decisions in structurizr](#9)\n\n## Context and Problem Statement\n\nArchitecture decisions aren't documented yet.\n\n\n## Considered Options\n\n* Confluence Page\n* MADR\n\n## Decision Outcome\n\nChosen option: \"MADR\", because its more suited and closer to code\n\n### Consequences\n\n* Good, because it adds documentation\n* Bad, because it takes time\n\n\n\n## Pros and Cons of the Options\n\n* Good, because easy adoption and close to the code\n\n## More Information",
+      "content" : "# 1. Record architecture decisions\n\nDate: 2026-03-03\ndecision-makers: Ila Hadi-Assar\nconsulted: Kerstin Keller\ninformed: eCAL Team\n\n## Status\n\nSuperceded by [9. Record architecture decisions in structurizr](#9)\n\n## Context and Problem Statement\n\nArchitecture decisions aren't documented yet.\n\n\n## Considered Options\n\n* Confluence Page\n* MADR\n\n## Decision Outcome\n\nChosen option: \"MADR\", because its more suited and closer to code\n\n### Consequences\n\n* Good, because it adds documentation\n* Bad, because it takes time\n\n\n\n## Pros and Cons of the Options\n\n* Good, because easy adoption and close to the code\n\n## More Information\n",
       "date" : "2026-03-03T00:00:00Z",
       "format" : "Markdown",
       "id" : "1",
@@ -16,14 +14,14 @@
       "status" : "Superseded",
       "title" : "Record architecture decisions"
     }, {
-      "content" : "# 2. Tracing instrumentation\n\nDate: 2026-03-03 \ndecision-makers: Ila Hadi-Assar \nconsulted: Kerstin Keller, Kristof Hannemann \ninformed: eCAL Team \n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nFor a system to be observable, it must be instrumented: that is, code from the system’s components must emit signals, such as traces.\n\n\n## Considered Options\n\n* **Implementing OpenTelemetry's Instrumentation API**\n    - ✅ ready to use\n    - ❌ adds external dependencies\n* **Implementing Instrumentation into User API**\n    - ✅ simple implementation on eCAL side\n    - ❌ not compatible with existing projects\n* **Implementing Instrumentation into protocol headers** (SHM,UDP,TCP)\n    - ✅  common approach\n    - ❌ might lead to issues with existing eCAL projects\n* **Implementing Instrumentation into eCAL API (internal send, receive, callback ... functions)**\n    - ✅ doesn't touch communication protocols\n    - ✅ doesn't add external dependencies\n    - ✅ doesn't require implementation in user projects\n    - ❌ slightly more complicated implementation\n\n## Decision Outcome\n\nChosen option: \"Implementing Instrumentation into eCAL API\", because this is the only option which doesnt: add dependencies (OpenTelemetry), change fundamantal functionality (protocol headers) or leave implementation for eCAL users.\n\n### Consequences\n\n* Good, because it enables tracing eCAL communication\n* Bad, because it adds overhead to eCAL communication\n\n### Confirmation\n\n\n## More Information",
+      "content" : "# 2. Tracing instrumentation\n\nDate: 2026-03-03\ndecision-makers: Ila Hadi-Assar\nconsulted: Kerstin Keller, Kristof Hannemann\ninformed: eCAL Team\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nFor a system to be observable, it must be instrumented: that is, code from the system’s components must emit signals, such as traces.\n\n\n## Considered Options\n\n* **Implementing OpenTelemetry's Instrumentation API**\n    - ✅ ready to use\n    - ❌ adds external dependencies\n* **Implementing Instrumentation into User API**\n    - ✅ simple implementation on eCAL side\n    - ❌ not compatible with existing projects\n* **Implementing Instrumentation into protocol headers** (SHM,UDP,TCP)\n    - ✅  common approach\n    - ❌ might lead to issues with existing eCAL projects\n* **Implementing Instrumentation into eCAL API (internal send, receive, callback ... functions)**\n    - ✅ doesn't touch communication protocols\n    - ✅ doesn't add external dependencies\n    - ✅ doesn't require implementation in user projects\n    - ❌ slightly more complicated implementation\n\n## Decision Outcome\n\nChosen option: \"Implementing Instrumentation into eCAL API\", because this is the only option which doesnt: add dependencies (OpenTelemetry), change fundamantal functionality (protocol headers) or leave implementation for eCAL users.\n\n### Consequences\n\n* Good, because it enables tracing eCAL communication\n* Bad, because it adds overhead to eCAL communication\n\n### Confirmation\n\n\n## More Information\n",
       "date" : "2026-03-03T00:00:00Z",
       "format" : "Markdown",
       "id" : "2",
       "status" : "Accepted",
       "title" : "Tracing instrumentation"
     }, {
-      "content" : "# 3. Tracing backend\n\nDate: 2026-03-17\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nCreating high amounts of Traces and uploading them to a frontend requires a lot of computation and adds external dependencies if you want Compliance with OpenTelemetry which is widely supported for tracing frontends\n\n## Considered Options\n\n* Implement custom solution inside eCAL with full tracing support\n    - ✅ all-in-one solution results in most simple code\n    - ❌ adds heavy load on eCAL\n* Export minimal traces and handle logic on a tracing backend\n    - ✅ moves most of the heavy load from eCAL to a seperate application\n    - ✅ enables usage of external dependencies\n    - ❌ overall more computation required\n    - ❌ traces need to be mapped on the backend\n\n## Decision Outcome\n\nChosen option: \"Export minimal traces and handle logic on a tracing backend\"\n### Consequences\n\n* Good, because overhead in eCAL is kept to a minimum\n* Bad, because another repository has to be maintained\n\n### Confirmation\n\n## More Information",
+      "content" : "# 3. Tracing backend\n\nDate: 2026-03-17\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nCreating high amounts of Traces and uploading them to a frontend requires a lot of computation and adds external dependencies if you want Compliance with OpenTelemetry which is widely supported for tracing frontends\n\n## Considered Options\n\n* Implement custom solution inside eCAL with full tracing support\n    - ✅ all-in-one solution results in most simple code\n    - ❌ adds heavy load on eCAL\n* Export minimal traces and handle logic on a tracing backend\n    - ✅ moves most of the heavy load from eCAL to a seperate application\n    - ✅ enables usage of external dependencies\n    - ❌ overall more computation required\n    - ❌ traces need to be mapped on the backend\n\n## Decision Outcome\n\nChosen option: \"Export minimal traces and handle logic on a tracing backend\"\n### Consequences\n\n* Good, because overhead in eCAL is kept to a minimum\n* Bad, because another repository has to be maintained\n\n### Confirmation\n\n## More Information\n",
       "date" : "2026-03-17T00:00:00Z",
       "format" : "Markdown",
       "id" : "3",
@@ -37,35 +35,35 @@
       "status" : "Accepted",
       "title" : "Data buffering solution"
     }, {
-      "content" : "# 5. Programming language\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context\n\nThe issue motivating this decision, and any context that influences or constrains the decision.\n\n## Decision\n\nThe change that we're proposing or have agreed to implement.\n\n## Consequences\n\nWhat becomes easier or more difficult to do and any risks introduced by the change that will need to be mitigated.\n",
+      "content" : "# 5. Programming language\n\nDate: 2026-03-18\ndecision-makers: Ila Hadi-Assar\nconsulted: Kerstin Keller\ninformed: eCAL Team\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nFor the implementation of the tracing backend outside of eCAL there were no strict guidelines, which defined the programming language.\n\n\n## Considered Options\n\n* C++\n    - ✅ most likely more efficient\n    - ❌ OpenTelemetry library not available as package\n* Python\n    - ✅ easy depency management\n    - ✅ faster results\n    - ❌ likely less efficient\n\n## Decision Outcome\n\nChosen option: \"Python\", because it's simpler and faster to implement\n\n### Consequences\n\n* Good, because it allows easy support of the OpenTelemetry library\n* Bad, because there might be some performance drawbacks\n\n## More Information\nPerformance drawbacks aren't a huge concern since the tracing backend doesn't interfere with eCAL's core communication.\n",
       "date" : "2026-03-18T00:00:00Z",
       "format" : "Markdown",
       "id" : "5",
       "status" : "Accepted",
       "title" : "Programming language"
     }, {
-      "content" : "# 6. Frontend\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nTraces need to be visualized to be able to analyse them. There are several frontends available mostly used for distributed tracing in Microservice Architectures.\n\n## Considered Options\n\n* Grafana+Tempo\n    - :heavy_check_mark: lots of analytic tools available\n    - :heavy_check_mark: widely used\n    - ❌ complex setup\n    - ❌ distribution isn't straight forward\n* Jaeger UI\n    - :heavy_check_mark: very simple setup\n    - :heavy_check_mark: easy distribution via docker-compose\n    - ❌ lacks tools for in depth analysis\n\n## Decision Outcome\n\nChosen option: \"Jaeger UI\", because the setup is much simpler.\n\n### Consequences\n\n* Good, because anyone can setup a tracing frontend by simply running a docker-compose file\n* Bad, because no in depth analysis possible in frontend\n\n## More Information\nA switch to Grafana+Tempo might happen in the future if more analytic tools are needed\n",
+      "content" : "# 6. Frontend\n\nDate: 2026-03-18\ndecision-makers: Ila Hadi-Assar\nconsulted: Kristof Hannemann\ninformed: eCAL Team\n\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nTraces need to be visualized to be able to analyse them. There are several frontends available mostly used for distributed tracing in Microservice Architectures.\n\n## Considered Options\n\n* Grafana+Tempo\n    - ✅ lots of analytic tools available\n    - ✅ widely used\n    - ❌ complex setup\n    - ❌ distribution isn't straight forward\n* Jaeger UI\n    - ✅ very simple setup\n    - ✅ easy distribution via docker-compose\n    - ❌ lacks tools for in depth analysis\n\n## Decision Outcome\n\nChosen option: \"Jaeger UI\", because the setup is much simpler.\n\n### Consequences\n\n* Good, because anyone can setup a tracing frontend by simply running a docker-compose file\n* Bad, because no in depth analysis possible in frontend\n\n## More Information\nA switch to Grafana+Tempo might happen in the future if more analytic tools are needed\n",
       "date" : "2026-03-18T00:00:00Z",
       "format" : "Markdown",
       "id" : "6",
       "status" : "Accepted",
       "title" : "Frontend"
     }, {
-      "content" : "# 7. Tracing context propagation\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nWith context propagation, signals (traces) can be correlated with each other, regardless of where they are generated. Although not limited to tracing, context propagation allows traces to build causal information about a system across services that are arbitrarily distributed across process and network boundaries.\n\n## Considered Options\n\n* OpenTelemtry\n    - ✅ ready to use\n    - ✅ widely supported format for frontends\n* Selfmade\n    - ✅ removes external dependencies\n    - ❌ implementation takes time\n    - ❌ needs to be tailored to specific frontend\n\n## Decision Outcome\n\nChosen option: \"OpenTelemtry\", because most simply implementation and widely accepted format.\n\n### Consequences\n\n* Good, because resulting traces are supported by many frontends and it saves lots of time\n\n### Confirmation\n\n## More Information\n",
+      "content" : "# 7. Tracing context propagation\n\nDate: 2026-03-18\ndecision-makers: Ila Hadi-Assar\nconsulted: Kerstin Keller\ninformed: eCAL Team\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\nWith context propagation, signals (traces) can be correlated with each other, regardless of where they are generated. Although not limited to tracing, context propagation allows traces to build causal information about a system across services that are arbitrarily distributed across process and network boundaries.\n\n## Considered Options\n\n* OpenTelemtry\n    - ✅ ready to use\n    - ✅ widely supported format for frontends\n* Selfmade\n    - ✅ removes external dependencies\n    - ❌ implementation takes time\n    - ❌ needs to be tailored to specific frontend\n\n## Decision Outcome\n\nChosen option: \"OpenTelemtry\", because most simply implementation and widely accepted format.\n\n### Consequences\n\n* Good, because resulting traces are supported by many frontends and it saves lots of time\n\n### Confirmation\n\n## More Information\n",
       "date" : "2026-03-18T00:00:00Z",
       "format" : "Markdown",
       "id" : "7",
       "status" : "Accepted",
       "title" : "Tracing context propagation"
     }, {
-      "content" : "# 8. Record software architecture\n\nDate: 2026-03-18\n\n## Status\n\nAccepted\n\n## Context\n\nThe issue motivating this decision, and any context that influences or constrains the decision.\n\n## Decision\n\nThe change that we're proposing or have agreed to implement.\n\n## Consequences\n\nWhat becomes easier or more difficult to do and any risks introduced by the change that will need to be mitigated.\n",
+      "content" : "# 8. Record software architecture\n\nDate: 2026-03-18\ndecision-makers: Ila Hadi-Assar\nconsulted: Kristof Hannemann\ninformed: eCAL Team\n\n## Status\n\nAccepted\n\n## Context and Problem Statement\n\nThere are no architecture diagrams yet \n\n## Considered Options\n\n* Plant-UML\n    - ✅ most common approach\n    - ❌ doesnt allow zooming through layers\n* Structurizr\n    - ✅ zooming through layers\n    - ✅ GUI with useful features such as depency graphs\n    - ✅ ADRs included in GUI\n    - ❌ cant import Plant-UML diagrams\n\n\n## Decision Outcome\n\nChosen option: \"Structurizr\", because it offers more value to this project\n\n### Consequences\n\n* Good, well organized software architecture through diagrams and adrs in one tool\n* Bad, integrating other parts of architecture will be difficult since there is no Plant-UML support\n\n## More Information",
       "date" : "2026-03-18T00:00:00Z",
       "format" : "Markdown",
       "id" : "8",
       "status" : "Accepted",
       "title" : "Record software architecture"
     }, {
-      "content" : "# 9. Record architecture decisions in structurizr\n\nDate: 2026-03-18\n\n## Status\n\nSupercedes [1. Record architecture decisions](#1)\n\nAccepted\n\n## Context and Problem Statement\n\nArchitecture decisions aren't documented yet.\n\n\n## Considered Options\n\n* Confluence Page\n    - ✅ most flexible\n    - ❌ not a dedicated solution for software architecture\n    - ❌ often overlooked\n* MADR\n    - ✅ quick and simple format\n    - ✅ close to code so it wont be overlooked as much\n    - ❌ doesnt include other architecture artifects\n* Structurizr\n    - ✅ dedicated solution for all architecture needs\n    - ✅ GUI makes things more visible\n    - ✅ ADRs stay close to code\n    - ✅/❌ adr-tools is now required to create adrs \n    - ❌ more complicated usage\n\n\n## Decision Outcome\n\nChosen option: \"Structurizr\", because it offers more a structurized approach for Software Architecture.\nIncluding a GUI for ADRs as well as Software Diagrams.\n\n### Consequences\n\n* Good, because it adds documentation\n* Neutral, the use of adr-tools for creating adrs is now pretty much necessary\n* Bad, because it takes time\n\n\n\n## Pros and Cons of the Options\n\n* Good, because easy adoption and close to the code\n\n## More Information\n",
+      "content" : "# 9. Record architecture decisions in structurizr\n\nDate: 2026-03-18\ndecision-makers: Ila Hadi-Assar\nconsulted: Kristof Hannemann\ninformed: eCAL Team\n\n## Status\n\nSupercedes [1. Record architecture decisions](#1)\n\nAccepted\n\n## Context and Problem Statement\n\nArchitecture decisions aren't documented yet.\n\n\n## Considered Options\n\n* Confluence Page\n    - ✅ most flexible\n    - ❌ not a dedicated solution for software architecture\n    - ❌ often overlooked\n* MADR\n    - ✅ quick and simple format\n    - ✅ close to code so it wont be overlooked as much\n    - ❌ doesnt include other architecture artifects\n* Structurizr\n    - ✅ dedicated solution for all architecture needs\n    - ✅ GUI makes things more visible\n    - ✅ ADRs stay close to code\n    - ✅/❌ adr-tools is now required to create adrs\n    - ❌ more complicated usage\n\n\n## Decision Outcome\n\nChosen option: \"Structurizr\", because it offers more a structurized approach for Software Architecture.\nIncluding a GUI for ADRs as well as Software Diagrams.\n\n### Consequences\n\n* Good, because it adds documentation\n* Neutral, the use of adr-tools for creating adrs is now pretty much necessary\n* Bad, because it takes time\n\n## More Information\n",
       "date" : "2026-03-18T00:00:00Z",
       "format" : "Markdown",
       "id" : "9",
@@ -78,7 +76,7 @@
     } ]
   },
   "id" : 1,
-  "lastModifiedDate" : "2026-03-18T12:04:48Z",
+  "lastModifiedDate" : "2026-03-19T10:26:41Z",
   "model" : {
     "people" : [ {
       "description" : "Operates and monitors the system",
@@ -467,7 +465,7 @@
   },
   "name" : "Name",
   "properties" : {
-    "structurizr.inspection.error" : "23",
+    "structurizr.inspection.error" : "24",
     "structurizr.inspection.info" : "0",
     "structurizr.inspection.ignore" : "0",
     "structurizr.inspection.warning" : "0"
@@ -642,7 +640,11 @@
     } ],
     "configuration" : {
       "branding" : { },
-      "lastSavedView" : "SystemContext",
+      "lastSavedView" : "Containers",
+      "properties" : {
+        "plantuml.format" : "png",
+        "plantuml.url" : "http://localhost:7777"
+      },
       "styles" : {
         "elements" : [ {
           "color" : "#65c0f5",
@@ -732,6 +734,42 @@
       } ],
       "softwareSystemId" : "3",
       "title" : "eCAL Tracing Backend - Container Architecture"
+    } ],
+    "imageViews" : [ {
+      "content" : "http://localhost:7777/png/RPDDRzD048Rl-oj6FQK2H5Cue4f5hOeGgWAD51zx6Q-dzkBrph8VIU3NC-ku8OuuUJNppCVxZdmN4uQK1mlqSB-2Ag0sheKlc12-Mjuf5NlZF0OS8DAlJ4xJVGYygpgZUqSnmlK94ZYxHdDm561vTP8OS3y8Z2r5yuTWUNsbb6IIqSQZIt0nZb_dsfhOKRW0ZE1p_Hzca-keWwadA9v3u-eFR2tfn0T6ivqp6_d0T_H-QZAWdmF51v6m3hmrpGIbCJRd7f7QAVrpV8ggNCExpsKlk2aIYg15Oc_qMsXajqlbE144qtO9-6LK2S2o2YR3xdOgaPWCTD5pIBUvyOfS0wLIBd8w8P0cioNGQ6sDkZ_h7i-wJ_WiTYpzDq8SAoFAvmOQ4pLlnOx7pTEF5RmOI_6L4EU4YDbx-njYiRLeX3SmKCBoLAeWHx8XpGq1kJp4UQREnZR7Ch3CVVPpn0VssABeq-mIxTEpMqns5UZLYhBu9EdoEFvmFMcY0vKEJnNPSU48EvCwaBEII-zrLxQmnlLHgQb6gW_7bMhQbuF0rg1qMAtXMrMjOJ76FdvOVf9vT-AY_4_gBm00",
+      "contentType" : "image/png",
+      "description" : "Sequence diagram showing the full data flow from eCAL publish/subscribe through span mapping to Jaeger export",
+      "key" : "DataFlowSequence",
+      "name" : "example.puml",
+      "order" : 7,
+      "title" : "example.puml"
+    }, {
+      "content" : "http://localhost:7777/png/PLB1JiCm3BttAwoTDXWJHzG36jg4X8GuWCG5eSfBlCqqJQB4dJJG_fsqPLixSaXL-zdFVddpA1YahWmiKH0MpXXIuW8i3CP8CSjYoTPZm0fK4teG2RogXPwKis_yJN3RWmHNMwrSi1JWBiiygX8t1ACAsSxyVWG_6QJJTcePpuHTfZdNeBfeiMP3SQmJhj0SSeWI9Zb8xGsTq3SmoBVnGzP-h1E2m9kjW5iFwKxbIuxAxIX488McY1vjBAvcNz5PSmAXrLrQd6TLL2JOabxYTeomCMu57aKesDXcA5KtesI7WIBUizty4-KnhVnAg6ceY76eYuQirMJSN8bZUvJacQDyB5d9Pt__iyplQ3XDV24psS1gs-qyRkz-focSzZJEbRNFeObFWNLHqlv8_U8izNgkQZQwkAWSd_zJ-px9f6lwDtMQUsYAsUo-hqWETUF9NgG131VCmGUtOqqnlKA8f25GSgHELfwdbqXMptu1",
+      "contentType" : "image/png",
+      "description" : "Classes responsible for file discovery, JSONL loading, and metadata validation",
+      "elementId" : "4",
+      "key" : "CollectorClassDiagram",
+      "name" : "collector_classes.puml",
+      "order" : 8,
+      "title" : "collector_classes.puml"
+    }, {
+      "content" : "http://localhost:7777/png/bLJVJzim47xFNt7QmnH4WR6zJ9KsqQQTMb4OQiHU4BACSxHU7TkodMuTsl--SqfAIFQmMLNItDtttMzV-C1Tg4e5kUKQhhYrw21Jt7lqIU8tKblkU0aYYaOXEFbG1PmBetFv2-5ToyIPIXV2E4qC7vF4Sh7XAuGt9P5AlJgrkpVmb2H0fsQ3BrBXml22x9zgSJp7e4Z4ldkZsICPfF5XULWFmGTtD8I5zE5k8aMuhp6_sunN67Z10nzNKdLf7wACbSyMJ1cpgMpwyasqRNBo5DztKeS1lBZRSwqmiE2ueBJO5fsNHgSTvZtyg8ww7-XKL-K4XUa6MTGoflWENLe_sPQh2eT0SRJ8ulbwm_BfzQHMmITgHKknd6RJ-RTfepjlwxBHOZ4UPPUDylqhnjaLcusk9_biT7c0VpXOJEPBTdCxNippsNJPznpL-UqupvRpyOl-l9z_dBRC8G_cTVuYof1vKdlsw4p9OabJhjHUrkxG0FvQyW74pc0SbMkZyK1-0inJsuGfInejteooJoFn029FGs0i2pkBJFCIcx7hS4MgwBvF5AM7vXzGhxBFZ0xuCzmuO_cgKuCJiDK33UEQMXy9AU3Qs3_FOwYimi6-W7lDVGlhKA3SudyZZm6rasAzhtBwxxMM1TlWhbSaIfT-hGK_FVtSsyuXM6Usia0FZl-8iHjN-2wglIg4g6-cfaDm1lMIGBqaFkbwYFZsg56SbRLA4aEJ3pnNAMdRHLo_IKCASKKbeOM7j_JV6xKb9hhzaEQygNRI1_R3u4NH0C_4ce8bkaUaJn6ltGlK1Tt9oHy0",
+      "contentType" : "image/png",
+      "description" : "Classes for loading spans, building metadata lookups, decoding enums, creating OTel spans, and propagating context",
+      "elementId" : "10",
+      "key" : "MapperClassDiagram",
+      "name" : "mapper_classes.puml",
+      "order" : 9,
+      "title" : "mapper_classes.puml"
+    }, {
+      "content" : "http://localhost:7777/png/jLHDZzCm4BtdLunwGAdOHEM6Ah5QM420-AXeRmX5hZDjhNNiO8-xB8Z_pZZ9fcaJZaGvM9dtPkQz6UV6at0KAWqR9oGwU09lVjRM4HzljV0UVPBuEsLguKG5CdvwIUJKDX2-bzQirI-4nG3YR32bjCvmXkT9KWjv9_O8CspIAhFFwuSP_4uIuAV91r_Hs-0alXMIh7lW87JFKv0E1M4g7clw9RnMakRBdjM3iwm_UdH79J4tea9umSMbq1cnGgu_6w6EwBoo9WAVvOjySK94NjxnYWws14-kGVmPYcZzcvBWaK9TK1ClQcUFgaINMj9rWQQihJBKvBo2gKgibEbwKgRZpCvuIDlYgoxtLTVCVDpbhJNUQbpNmlHp7lRQJYdr76Udr_WZe97uBUA_SoSd7hiVD0rL7WALzjwa3Fji3Gv2EyjZAdOw-4DAga8RgAYKrefBi7WcRAtLusQ_R3wk_j5f1cVM_Jy5PmsnmHAzj-wJCBpKvzQ9iYnYrJZY5fNsfxPkJx-qQ33IjQhgTZuz6hBhgRdrb5U2vE6S4IcNxZtAuVVomkNvzSN-Be7lzaxjWqCFzueEf-js3epKaIrBtiozybpKG--1JqQuR5fPvDjuru5ix2F68Irn6_RpwIIZJHbc-20muevAD3XujzciakI65uZ_UybV",
+      "contentType" : "image/png",
+      "description" : "Classes for resource creation, tracer setup, console debugging, and OTLP HTTP export to Jaeger",
+      "elementId" : "21",
+      "key" : "TracerClassDiagram",
+      "name" : "tracer_exporter_classes.puml",
+      "order" : 10,
+      "title" : "tracer_exporter_classes.puml"
     } ],
     "systemContextViews" : [ {
       "automaticLayout" : {

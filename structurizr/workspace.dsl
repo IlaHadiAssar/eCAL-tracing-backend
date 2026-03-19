@@ -154,6 +154,11 @@ workspace "Name" "Description" {
     }
 
     views {
+        properties {
+            "plantuml.url" "http://localhost:7777"
+            "plantuml.format" "png"
+        }
+
         # C4 Level 1: System Context
         systemContext backend "SystemContext" {
             title "eCAL Tracing Backend - System Context"
@@ -199,6 +204,31 @@ workspace "Name" "Description" {
             autolayout lr
         }
 
+        image * "DataFlowSequence" {
+            title "eCAL Tracing Data Flow - Sequence Diagram"
+            description "Sequence diagram showing the full data flow from eCAL publish/subscribe through span mapping to Jaeger export"
+            plantuml puml/example.puml
+        }
+
+        # C4 Level 4: Class Diagrams (PlantUML)
+        image backend.collector "CollectorClassDiagram" {
+            title "Data Collector - Class Diagram"
+            description "Classes responsible for file discovery, JSONL loading, and metadata validation"
+            plantuml puml/collector_classes.puml
+        }
+
+        image backend.mapper "MapperClassDiagram" {
+            title "Span Mapper - Class Diagram"
+            description "Classes for loading spans, building metadata lookups, decoding enums, creating OTel spans, and propagating context"
+            plantuml puml/mapper_classes.puml
+        }
+
+        image backend.tracer "TracerClassDiagram" {
+            title "Tracer Provider & Exporter - Class Diagram"
+            description "Classes for resource creation, tracer setup, console debugging, and OTLP HTTP export to Jaeger"
+            plantuml puml/tracer_exporter_classes.puml
+        }
+
         styles {
             element "Element" {
                 color #438dd5
@@ -242,10 +272,6 @@ workspace "Name" "Description" {
                 dashed false
             }
         }
-    }
-
-    configuration {
-        scope softwaresystem
     }
 
 }

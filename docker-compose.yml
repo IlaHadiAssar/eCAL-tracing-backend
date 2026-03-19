@@ -6,6 +6,12 @@ services:
       - "16686:16686"   # Jaeger UI
       - "4317:4317"     # OTLP gRPC ingest
       - "4318:4318"     # OTLP HTTP ingest
+  plantuml:
+    image: plantuml/plantuml-server:jetty
+    container_name: plantuml
+    ports:
+      - "7777:8080"
+
   structurizr:
     container_name: structurizr
     image: structurizr/lite:latest
@@ -13,4 +19,5 @@ services:
       - "8080:8080"
     volumes:
       - "./structurizr:/usr/local/structurizr"
+      - "./doc/puml:/usr/local/structurizr/puml"
       - "./doc/adr:/usr/local/structurizr/adr"
