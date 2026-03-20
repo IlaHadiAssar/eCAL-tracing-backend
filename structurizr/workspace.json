@@ -1,5 +1,7 @@
 {
-  "configuration" : { },
+  "configuration" : {
+    "scope" : "SoftwareSystem"
+  },
   "description" : "Description",
   "documentation" : {
     "decisions" : [ {
@@ -76,386 +78,253 @@
     } ]
   },
   "id" : 1,
-  "lastModifiedDate" : "2026-03-19T10:26:41Z",
+  "lastModifiedDate" : "2026-03-20T14:33:46Z",
   "model" : {
     "people" : [ {
-      "description" : "Operates and monitors the system",
+      "description" : "Operates some system with eCAL usage",
       "id" : "1",
-      "name" : "Developer/DevOps",
+      "name" : "eCAL System Owner",
+      "properties" : {
+        "structurizr.dsl.identifier" : "owner"
+      },
+      "relationships" : [ {
+        "description" : "Configures and operates System",
+        "destinationId" : "3",
+        "id" : "22",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "eCAL Suite"
+      }, {
+        "description" : "Runs exporter on demand",
+        "destinationId" : "4",
+        "id" : "23",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "CLI"
+      }, {
+        "description" : "Views traces via UI",
+        "destinationId" : "20",
+        "id" : "24",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "Web UI"
+      } ],
+      "tags" : "Element,Person"
+    }, {
+      "description" : "Develops eCAL and offers support to eCAL system Owners",
+      "id" : "2",
+      "name" : "eCAL Developer",
       "properties" : {
         "structurizr.dsl.identifier" : "dev"
       },
       "relationships" : [ {
-        "description" : "Configures and operates via CLI",
-        "destinationId" : "3",
-        "id" : "43",
-        "sourceId" : "1",
-        "tags" : "Relationship"
+        "description" : "Runs exporter on demand",
+        "destinationId" : "4",
+        "id" : "25",
+        "sourceId" : "2",
+        "tags" : "Relationship",
+        "technology" : "CLI"
       }, {
         "description" : "Views traces via UI",
-        "destinationId" : "40",
-        "id" : "44",
-        "sourceId" : "1",
-        "tags" : "Relationship"
+        "destinationId" : "20",
+        "id" : "26",
+        "sourceId" : "2",
+        "tags" : "Relationship",
+        "technology" : "Web UI"
       } ],
       "tags" : "Element,Person"
     } ],
     "softwareSystems" : [ {
-      "description" : "Event Communication Abstraction Layer - generates publisher/subscriber spans and topic metadata",
+      "description" : "Some system which uses eCAL",
       "documentation" : { },
-      "id" : "2",
-      "name" : "eCAL Core",
+      "id" : "3",
+      "name" : "eCAL User System",
       "properties" : {
         "structurizr.dsl.identifier" : "ecal"
       },
       "relationships" : [ {
         "description" : "Produces span/metadata JSON files",
         "destinationId" : "4",
-        "id" : "41",
-        "sourceId" : "2",
-        "tags" : "Relationship"
-      }, {
-        "description" : "Produces span/metadata JSON files",
-        "destinationId" : "3",
-        "id" : "42",
-        "linkedRelationshipId" : "41",
-        "sourceId" : "2"
+        "id" : "21",
+        "sourceId" : "3",
+        "tags" : "Relationship",
+        "technology" : "JSONL files"
       } ],
       "tags" : "Element,Software System,External System"
     }, {
       "containers" : [ {
         "components" : [ {
-          "description" : "Discovers span and metadata JSONL files using glob patterns",
-          "documentation" : { },
-          "id" : "5",
-          "name" : "File Discoverer",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.collector.fileDiscoverer"
-          },
-          "relationships" : [ {
-            "description" : "Provides file paths",
-            "destinationId" : "6",
-            "id" : "8",
-            "sourceId" : "5",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "Python glob"
-        }, {
-          "description" : "Reads and parses JSON/JSONL files from filesystem",
+          "description" : "Discovers and loads span/metadata JSONL files from data directory",
           "documentation" : { },
           "id" : "6",
-          "name" : "File Reader",
+          "name" : "Data Collector",
           "properties" : {
-            "structurizr.dsl.identifier" : "backend.collector.fileReader"
+            "structurizr.dsl.identifier" : "backend.main.collector"
           },
           "relationships" : [ {
-            "description" : "Provides parsed records",
+            "description" : "Supplies eCAL span data",
             "destinationId" : "7",
             "id" : "9",
             "sourceId" : "6",
-            "tags" : "Relationship"
+            "tags" : "Relationship",
+            "technology" : "Python"
+          }, {
+            "description" : "loads JSON files from storage",
+            "destinationId" : "11",
+            "id" : "16",
+            "sourceId" : "6",
+            "tags" : "Relationship",
+            "technology" : "JSONL files"
           } ],
-          "tags" : "Element,Component",
-          "technology" : "Python json"
+          "tags" : "Element,Component,Core Logic",
+          "technology" : "Python"
         }, {
-          "description" : "Validates span and metadata schema before processing",
+          "description" : "Maps eCAL publisher/subscriber spans to OpenTelemetry trace model with context propagation",
           "documentation" : { },
           "id" : "7",
-          "name" : "Data Validator",
+          "name" : "Span Mapper",
           "properties" : {
-            "structurizr.dsl.identifier" : "backend.collector.dataValidator"
+            "structurizr.dsl.identifier" : "backend.main.mapper"
           },
-          "tags" : "Element,Component",
+          "relationships" : [ {
+            "description" : "Creates OTel spans with context",
+            "destinationId" : "8",
+            "id" : "10",
+            "sourceId" : "7",
+            "tags" : "Relationship",
+            "technology" : "OpenTelemetry SDK"
+          } ],
+          "tags" : "Element,Component,Core Logic",
           "technology" : "Python"
+        }, {
+          "description" : "Manages OpenTelemetry SDK and builds unified trace hierarchy and exports traces to Jaeger via OTLP HTTP protocol",
+          "documentation" : { },
+          "id" : "8",
+          "name" : "OTLP Exporter",
+          "properties" : {
+            "structurizr.dsl.identifier" : "backend.main.exporter"
+          },
+          "relationships" : [ {
+            "description" : "Exports traces on port 4318",
+            "destinationId" : "20",
+            "id" : "27",
+            "sourceId" : "8",
+            "tags" : "Relationship",
+            "technology" : "OTLP HTTP"
+          } ],
+          "tags" : "Element,Component,Core Logic",
+          "technology" : "OpenTelemetry Python HTTP"
         } ],
-        "description" : "Discovers and loads span/metadata JSONL files from data directory",
+        "description" : "the main python module",
         "documentation" : { },
-        "id" : "4",
-        "name" : "Data Collector",
+        "id" : "5",
+        "name" : "src.main",
         "properties" : {
-          "structurizr.dsl.identifier" : "backend.collector"
+          "structurizr.dsl.identifier" : "backend.main"
         },
         "relationships" : [ {
-          "description" : "Supplies eCAL span data",
-          "destinationId" : "10",
-          "id" : "37",
-          "sourceId" : "4",
-          "tags" : "Relationship"
+          "description" : "loads JSON files from storage",
+          "destinationId" : "11",
+          "id" : "17",
+          "linkedRelationshipId" : "16",
+          "sourceId" : "5",
+          "technology" : "JSONL files"
+        }, {
+          "description" : "Exports traces on port 4318",
+          "destinationId" : "20",
+          "id" : "28",
+          "linkedRelationshipId" : "27",
+          "sourceId" : "5",
+          "technology" : "OTLP HTTP"
         } ],
         "tags" : "Element,Container",
         "technology" : "Python"
       }, {
+        "description" : "a directory which stores data exported from eCAL in JSON files",
+        "documentation" : { },
+        "id" : "11",
+        "name" : "data/",
+        "properties" : {
+          "structurizr.dsl.identifier" : "backend.storage"
+        },
+        "tags" : "Element,Container",
+        "technology" : "directory"
+      }, {
         "components" : [ {
-          "description" : "Loads span and metadata JSONL files",
-          "documentation" : { },
-          "id" : "11",
-          "name" : "JSON File Loader",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.mapper.fileLoader"
-          },
-          "relationships" : [ {
-            "description" : "Decodes operation types",
-            "destinationId" : "13",
-            "id" : "16",
-            "sourceId" : "11",
-            "tags" : "Relationship"
-          }, {
-            "description" : "Provides raw data",
-            "destinationId" : "12",
-            "id" : "17",
-            "sourceId" : "11",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "Python"
-        }, {
-          "description" : "Constructs lookup maps of topic metadata",
-          "documentation" : { },
-          "id" : "12",
-          "name" : "Metadata Builder",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.mapper.metadataBuilder"
-          },
-          "relationships" : [ {
-            "description" : "Supplies metadata context",
-            "destinationId" : "14",
-            "id" : "18",
-            "sourceId" : "12",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "Python"
-        }, {
-          "description" : "Decodes eCAL enums: operation types, directions, transport layers",
+          "description" : "ecals core communication libraries and APIs",
           "documentation" : { },
           "id" : "13",
-          "name" : "Enum Decoder",
+          "name" : "Core",
           "properties" : {
-            "structurizr.dsl.identifier" : "backend.mapper.enumDecoder"
+            "structurizr.dsl.identifier" : "backend.ecalcore.core"
           },
+          "relationships" : [ {
+            "description" : "Uses",
+            "destinationId" : "14",
+            "id" : "15",
+            "sourceId" : "13",
+            "tags" : "Relationship",
+            "technology" : "C++"
+          } ],
           "tags" : "Element,Component",
-          "technology" : "Python"
+          "technology" : "C++"
         }, {
-          "description" : "Maps eCAL spans to OpenTelemetry with context propagation",
+          "description" : "eCALs internal tracing library",
           "documentation" : { },
           "id" : "14",
-          "name" : "Span Creator",
+          "name" : "Tracing",
           "properties" : {
-            "structurizr.dsl.identifier" : "backend.mapper.spanCreator"
+            "structurizr.dsl.identifier" : "backend.ecalcore.tracing"
           },
           "relationships" : [ {
-            "description" : "Links span contexts",
-            "destinationId" : "15",
-            "id" : "19",
+            "description" : "exports traces as JSON",
+            "destinationId" : "11",
+            "id" : "18",
             "sourceId" : "14",
-            "tags" : "Relationship"
+            "tags" : "Relationship",
+            "technology" : "JSONL files"
           } ],
           "tags" : "Element,Component",
-          "technology" : "Python"
-        }, {
-          "description" : "Maintains context links: publish → receive → callback",
-          "documentation" : { },
-          "id" : "15",
-          "name" : "Context Propagator",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.mapper.contextPropagator"
-          },
-          "relationships" : [ {
-            "description" : "Adds parent/child references",
-            "destinationId" : "14",
-            "id" : "20",
-            "sourceId" : "15",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "Python"
+          "technology" : "C++"
         } ],
-        "description" : "Maps eCAL publisher/subscriber spans to OpenTelemetry trace model with context propagation",
+        "description" : "ecal core communication libraries and APIs",
         "documentation" : { },
-        "id" : "10",
-        "name" : "Span Mapper",
+        "id" : "12",
+        "name" : "ecal core",
         "properties" : {
-          "structurizr.dsl.identifier" : "backend.mapper"
+          "structurizr.dsl.identifier" : "backend.ecalcore"
         },
         "relationships" : [ {
-          "description" : "Creates OTel spans with context",
-          "destinationId" : "21",
-          "id" : "38",
-          "sourceId" : "10",
-          "tags" : "Relationship"
+          "description" : "exports traces as JSON",
+          "destinationId" : "11",
+          "id" : "19",
+          "linkedRelationshipId" : "18",
+          "sourceId" : "12",
+          "technology" : "JSONL files"
         } ],
-        "tags" : "Element,Container,Core Logic",
-        "technology" : "Python"
-      }, {
-        "components" : [ {
-          "description" : "Creates OTel Resource with service metadata",
-          "documentation" : { },
-          "id" : "22",
-          "name" : "Resource Factory",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.tracer.resourceFactory"
-          },
-          "relationships" : [ {
-            "description" : "Configures with service metadata",
-            "destinationId" : "23",
-            "id" : "27",
-            "sourceId" : "22",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "OpenTelemetry SDK"
-        }, {
-          "description" : "Instantiates TracerProvider with resource",
-          "documentation" : { },
-          "id" : "23",
-          "name" : "Tracer Factory",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.tracer.tracerFactory"
-          },
-          "relationships" : [ {
-            "description" : "Registers span processors",
-            "destinationId" : "26",
-            "id" : "28",
-            "sourceId" : "23",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "OpenTelemetry SDK"
-        }, {
-          "description" : "Debug exporter that prints spans to console",
-          "documentation" : { },
-          "id" : "24",
-          "name" : "Console Exporter",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.tracer.consoleExporter"
-          },
-          "tags" : "Element,Component",
-          "technology" : "Python/Custom"
-        }, {
-          "description" : "Exports spans to Jaeger via OTLP HTTP",
-          "documentation" : { },
-          "id" : "25",
-          "name" : "OTLP HTTP Exporter",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.tracer.otlpExporter"
-          },
-          "tags" : "Element,Component",
-          "technology" : "OpenTelemetry SDK"
-        }, {
-          "description" : "Manages SimpleSpanProcessor and BatchSpanProcessor",
-          "documentation" : { },
-          "id" : "26",
-          "name" : "Processor Manager",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.tracer.processorManager"
-          },
-          "relationships" : [ {
-            "description" : "Routes spans to console",
-            "destinationId" : "24",
-            "id" : "29",
-            "sourceId" : "26",
-            "tags" : "Relationship"
-          }, {
-            "description" : "Routes spans to OTLP",
-            "destinationId" : "25",
-            "id" : "30",
-            "sourceId" : "26",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "OpenTelemetry SDK"
-        } ],
-        "description" : "Manages OpenTelemetry SDK and builds unified trace hierarchy",
-        "documentation" : { },
-        "id" : "21",
-        "name" : "Tracer Provider",
-        "properties" : {
-          "structurizr.dsl.identifier" : "backend.tracer"
-        },
-        "relationships" : [ {
-          "description" : "Sends trace data",
-          "destinationId" : "31",
-          "id" : "39",
-          "sourceId" : "21",
-          "tags" : "Relationship"
-        } ],
-        "tags" : "Element,Container,Core Logic",
-        "technology" : "OpenTelemetry Python SDK"
-      }, {
-        "components" : [ {
-          "description" : "Batches spans for efficient export to reduce overhead",
-          "documentation" : { },
-          "id" : "32",
-          "name" : "Batch Processor",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.exporter.batchProcessor"
-          },
-          "relationships" : [ {
-            "description" : "Sends batch",
-            "destinationId" : "33",
-            "id" : "35",
-            "sourceId" : "32",
-            "tags" : "Relationship"
-          }, {
-            "description" : "Sends copy for debug",
-            "destinationId" : "34",
-            "id" : "36",
-            "sourceId" : "32",
-            "tags" : "Relationship"
-          } ],
-          "tags" : "Element,Component",
-          "technology" : "OpenTelemetry SDK"
-        }, {
-          "description" : "Sends batched span data via HTTP/JSON to Jaeger",
-          "documentation" : { },
-          "id" : "33",
-          "name" : "HTTP Transport",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.exporter.httpTransport"
-          },
-          "tags" : "Element,Component",
-          "technology" : "OpenTelemetry OTLP HTTP"
-        }, {
-          "description" : "Routes spans to console for real-time debugging",
-          "documentation" : { },
-          "id" : "34",
-          "name" : "Console Debugger",
-          "properties" : {
-            "structurizr.dsl.identifier" : "backend.exporter.consoleDebugger"
-          },
-          "tags" : "Element,Component",
-          "technology" : "Python/Custom"
-        } ],
-        "description" : "Exports traces to Jaeger via OTLP HTTP protocol",
-        "documentation" : { },
-        "id" : "31",
-        "name" : "OTLP Exporter",
-        "properties" : {
-          "structurizr.dsl.identifier" : "backend.exporter"
-        },
         "tags" : "Element,Container",
-        "technology" : "OpenTelemetry OTLP HTTP Exporter"
+        "technology" : "C++"
       } ],
-      "description" : "OpenTelemetry tracing backend for eCAL pub/sub instrumentation",
+      "description" : "OpenTelemetry tracing backend for eCAL pub/sub context propagation and exporting",
       "documentation" : { },
-      "id" : "3",
+      "id" : "4",
       "name" : "eCAL Tracing Backend",
       "properties" : {
         "structurizr.dsl.identifier" : "backend"
       },
       "relationships" : [ {
         "description" : "Exports traces on port 4318",
-        "destinationId" : "40",
-        "id" : "45",
-        "sourceId" : "3",
-        "tags" : "Relationship"
+        "destinationId" : "20",
+        "id" : "29",
+        "linkedRelationshipId" : "27",
+        "sourceId" : "4",
+        "technology" : "OTLP HTTP"
       } ],
       "tags" : "Element,Software System"
     }, {
-      "description" : "Distributed tracing backend - receives and visualizes traces",
+      "description" : "Distributed tracing frontend - receives and visualizes traces",
       "documentation" : { },
-      "id" : "40",
+      "id" : "20",
       "name" : "Jaeger",
       "properties" : {
         "structurizr.dsl.identifier" : "jaeger"
@@ -463,222 +332,149 @@
       "tags" : "Element,Software System,External System"
     } ]
   },
-  "name" : "Name",
+  "name" : "eCAl Tracing System",
   "properties" : {
-    "structurizr.inspection.error" : "24",
+    "structurizr.inspection.error" : "2",
     "structurizr.inspection.info" : "0",
     "structurizr.inspection.ignore" : "0",
     "structurizr.inspection.warning" : "0"
   },
   "views" : {
     "componentViews" : [ {
-      "automaticLayout" : {
-        "applied" : false,
-        "edgeSeparation" : 0,
-        "implementation" : "Graphviz",
-        "nodeSeparation" : 300,
-        "rankDirection" : "LeftRight",
-        "rankSeparation" : 300,
-        "vertices" : false
+      "containerId" : "5",
+      "description" : "Container diagram showing data flow from file loading through span mapping to Jaeger export",
+      "dimensions" : {
+        "height" : 1334,
+        "width" : 2886
       },
-      "containerId" : "10",
-      "description" : "Shows how the Span Mapper breaks down JSON loading, metadata building, enum decoding, and OpenTelemetry span creation with context propagation",
       "elements" : [ {
-        "id" : "11",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "12",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "13",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "14",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "15",
-        "x" : 0,
-        "y" : 0
-      } ],
-      "externalContainerBoundariesVisible" : false,
-      "key" : "MapperComponents",
-      "name" : "Component View: eCAL Tracing Backend - Span Mapper",
-      "order" : 3,
-      "relationships" : [ {
-        "id" : "16"
-      }, {
-        "id" : "17"
-      }, {
-        "id" : "18"
-      }, {
-        "id" : "19"
-      }, {
-        "id" : "20"
-      } ],
-      "title" : "Span Mapper - Component Diagram"
-    }, {
-      "automaticLayout" : {
-        "applied" : false,
-        "edgeSeparation" : 0,
-        "implementation" : "Graphviz",
-        "nodeSeparation" : 300,
-        "rankDirection" : "LeftRight",
-        "rankSeparation" : 300,
-        "vertices" : false
-      },
-      "containerId" : "21",
-      "description" : "Shows how the Tracer Provider manages OpenTelemetry SDK initialization, exporters, and span processors for both console and OTLP output",
-      "elements" : [ {
-        "id" : "22",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "23",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "24",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "25",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "26",
-        "x" : 0,
-        "y" : 0
-      } ],
-      "externalContainerBoundariesVisible" : false,
-      "key" : "TracerComponents",
-      "name" : "Component View: eCAL Tracing Backend - Tracer Provider",
-      "order" : 4,
-      "relationships" : [ {
-        "id" : "27"
-      }, {
-        "id" : "28"
-      }, {
-        "id" : "29"
-      }, {
-        "id" : "30"
-      } ],
-      "title" : "Tracer Provider - Component Diagram"
-    }, {
-      "automaticLayout" : {
-        "applied" : false,
-        "edgeSeparation" : 0,
-        "implementation" : "Graphviz",
-        "nodeSeparation" : 300,
-        "rankDirection" : "LeftRight",
-        "rankSeparation" : 300,
-        "vertices" : false
-      },
-      "containerId" : "4",
-      "description" : "Shows how the Data Collector discovers, reads, and validates JSONL files for processing",
-      "elements" : [ {
-        "id" : "5",
-        "x" : 0,
-        "y" : 0
-      }, {
         "id" : "6",
-        "x" : 0,
-        "y" : 0
+        "x" : 240,
+        "y" : 576
       }, {
         "id" : "7",
-        "x" : 0,
-        "y" : 0
+        "x" : 906,
+        "y" : 579
+      }, {
+        "id" : "8",
+        "x" : 1531,
+        "y" : 579
+      }, {
+        "id" : "11",
+        "x" : 236,
+        "y" : 163
+      }, {
+        "id" : "20",
+        "x" : 2236,
+        "y" : 581
       } ],
       "externalContainerBoundariesVisible" : false,
-      "key" : "CollectorComponents",
-      "name" : "Component View: eCAL Tracing Backend - Data Collector",
-      "order" : 5,
+      "key" : "Components",
+      "name" : "Component View: eCAL Tracing Backend - src.main",
+      "order" : 3,
       "relationships" : [ {
-        "id" : "8"
+        "id" : "10"
+      }, {
+        "id" : "16"
+      }, {
+        "id" : "27"
       }, {
         "id" : "9"
       } ],
-      "title" : "Data Collector - Component Diagram"
+      "title" : "eCAL Tracing Backend - Component Architecture"
     }, {
-      "automaticLayout" : {
-        "applied" : false,
-        "edgeSeparation" : 0,
-        "implementation" : "Graphviz",
-        "nodeSeparation" : 300,
-        "rankDirection" : "LeftRight",
-        "rankSeparation" : 300,
-        "vertices" : false
+      "containerId" : "12",
+      "description" : "Component diagram for eCAL core container",
+      "dimensions" : {
+        "height" : 1336,
+        "width" : 1495
       },
-      "containerId" : "31",
-      "description" : "Shows how the OTLP Exporter batches spans and sends them to Jaeger via HTTP while also debugging to console",
       "elements" : [ {
-        "id" : "32",
-        "x" : 0,
-        "y" : 0
+        "id" : "11",
+        "x" : 235,
+        "y" : 160
       }, {
-        "id" : "33",
-        "x" : 0,
-        "y" : 0
+        "id" : "13",
+        "x" : 804,
+        "y" : 580
       }, {
-        "id" : "34",
-        "x" : 0,
-        "y" : 0
+        "id" : "14",
+        "x" : 239,
+        "y" : 577
       } ],
       "externalContainerBoundariesVisible" : false,
-      "key" : "ExporterComponents",
-      "name" : "Component View: eCAL Tracing Backend - OTLP Exporter",
-      "order" : 6,
+      "key" : "Components-ecalcore",
+      "name" : "Component View: eCAL Tracing Backend - ecal core",
+      "order" : 4,
       "relationships" : [ {
-        "id" : "35"
+        "id" : "15"
       }, {
-        "id" : "36"
+        "id" : "18"
       } ],
-      "title" : "OTLP Exporter - Component Diagram"
+      "title" : "eCAL Core - Component Architecture"
     } ],
     "configuration" : {
       "branding" : { },
-      "lastSavedView" : "Containers",
+      "lastSavedView" : "SystemContext",
       "properties" : {
-        "plantuml.format" : "png",
+        "plantuml.format" : "svg",
         "plantuml.url" : "http://localhost:7777"
       },
       "styles" : {
         "elements" : [ {
-          "color" : "#65c0f5",
+          "background" : "#fdf8f1",
+          "color" : "#2f2a25",
           "fontSize" : 12,
           "shape" : "RoundedBox",
-          "stroke" : "#3c7fc0",
+          "stroke" : "#b0977b",
           "strokeWidth" : 2,
           "tag" : "Component"
         }, {
-          "color" : "#85bbf0",
-          "stroke" : "#3c7fc0",
-          "strokeWidth" : 4,
+          "background" : "#f9f4ec",
+          "color" : "#2f2a25",
+          "fontSize" : 13,
+          "stroke" : "#8c7b6a",
+          "strokeWidth" : 2,
+          "tag" : "Container"
+        }, {
+          "background" : "#3a2b24",
+          "color" : "#f8efe5",
+          "stroke" : "#d9a46a",
+          "strokeWidth" : 3,
           "tag" : "Core Logic"
         }, {
-          "color" : "#438dd5",
+          "background" : "#f7efe3",
+          "color" : "#2b2420",
           "fontSize" : 14,
-          "icon" : "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/python.svg",
           "shape" : "RoundedBox",
-          "stroke" : "#3c7fc0",
-          "strokeWidth" : 3,
+          "stroke" : "#6a5a4a",
+          "strokeWidth" : 2,
           "tag" : "Element"
         }, {
-          "color" : "#999999",
+          "background" : "#dce9ea",
+          "color" : "#2f3f42",
           "fontSize" : 14,
-          "stroke" : "#666666",
+          "stroke" : "#5b7b80",
+          "strokeWidth" : 2,
           "tag" : "External System"
         }, {
-          "color" : "#08427b",
+          "background" : "#f3d3b1",
+          "color" : "#4a2d1a",
           "fontSize" : 14,
           "shape" : "Person",
-          "stroke" : "#073461",
+          "stroke" : "#b06a3c",
+          "strokeWidth" : 2,
           "tag" : "Person"
+        }, {
+          "background" : "#f0e3d2",
+          "color" : "#2b2420",
+          "fontSize" : 14,
+          "stroke" : "#8f6b52",
+          "strokeWidth" : 2,
+          "tag" : "Software System"
         } ],
         "relationships" : [ {
+          "color" : "#4a3f36",
           "dashed" : false,
           "fontSize" : 12,
           "tag" : "Relationship",
@@ -688,132 +484,127 @@
       "terminology" : { }
     },
     "containerViews" : [ {
-      "automaticLayout" : {
-        "applied" : false,
-        "edgeSeparation" : 0,
-        "implementation" : "Graphviz",
-        "nodeSeparation" : 300,
-        "rankDirection" : "LeftRight",
-        "rankSeparation" : 300,
-        "vertices" : false
-      },
       "description" : "Container diagram showing data flow from file loading through span mapping to Jaeger export",
+      "dimensions" : {
+        "height" : 1232,
+        "width" : 2196
+      },
       "elements" : [ {
-        "id" : "2",
-        "x" : 0,
-        "y" : 0
+        "id" : "5",
+        "x" : 855,
+        "y" : 576
       }, {
-        "id" : "4",
-        "x" : 0,
-        "y" : 0
+        "id" : "11",
+        "x" : 219,
+        "y" : 576
       }, {
-        "id" : "10",
-        "x" : 0,
-        "y" : 0
+        "id" : "12",
+        "x" : 220,
+        "y" : 165
       }, {
-        "id" : "21",
-        "x" : 0,
-        "y" : 0
-      }, {
-        "id" : "31",
-        "x" : 0,
-        "y" : 0
+        "id" : "20",
+        "x" : 1545,
+        "y" : 579
       } ],
       "externalSoftwareSystemBoundariesVisible" : false,
       "key" : "Containers",
       "name" : "Container View: eCAL Tracing Backend",
       "order" : 2,
       "relationships" : [ {
-        "id" : "37"
+        "id" : "17"
       }, {
-        "id" : "38"
+        "id" : "19"
       }, {
-        "id" : "39"
-      }, {
-        "id" : "41"
+        "id" : "28"
       } ],
-      "softwareSystemId" : "3",
-      "title" : "eCAL Tracing Backend - Container Architecture"
+      "softwareSystemId" : "4",
+      "title" : "eCAL Tracing System - Container Architecture"
     } ],
     "imageViews" : [ {
-      "content" : "http://localhost:7777/png/RPDDRzD048Rl-oj6FQK2H5Cue4f5hOeGgWAD51zx6Q-dzkBrph8VIU3NC-ku8OuuUJNppCVxZdmN4uQK1mlqSB-2Ag0sheKlc12-Mjuf5NlZF0OS8DAlJ4xJVGYygpgZUqSnmlK94ZYxHdDm561vTP8OS3y8Z2r5yuTWUNsbb6IIqSQZIt0nZb_dsfhOKRW0ZE1p_Hzca-keWwadA9v3u-eFR2tfn0T6ivqp6_d0T_H-QZAWdmF51v6m3hmrpGIbCJRd7f7QAVrpV8ggNCExpsKlk2aIYg15Oc_qMsXajqlbE144qtO9-6LK2S2o2YR3xdOgaPWCTD5pIBUvyOfS0wLIBd8w8P0cioNGQ6sDkZ_h7i-wJ_WiTYpzDq8SAoFAvmOQ4pLlnOx7pTEF5RmOI_6L4EU4YDbx-njYiRLeX3SmKCBoLAeWHx8XpGq1kJp4UQREnZR7Ch3CVVPpn0VssABeq-mIxTEpMqns5UZLYhBu9EdoEFvmFMcY0vKEJnNPSU48EvCwaBEII-zrLxQmnlLHgQb6gW_7bMhQbuF0rg1qMAtXMrMjOJ76FdvOVf9vT-AY_4_gBm00",
-      "contentType" : "image/png",
-      "description" : "Sequence diagram showing the full data flow from eCAL publish/subscribe through span mapping to Jaeger export",
-      "key" : "DataFlowSequence",
-      "name" : "example.puml",
-      "order" : 7,
-      "title" : "example.puml"
-    }, {
-      "content" : "http://localhost:7777/png/PLB1JiCm3BttAwoTDXWJHzG36jg4X8GuWCG5eSfBlCqqJQB4dJJG_fsqPLixSaXL-zdFVddpA1YahWmiKH0MpXXIuW8i3CP8CSjYoTPZm0fK4teG2RogXPwKis_yJN3RWmHNMwrSi1JWBiiygX8t1ACAsSxyVWG_6QJJTcePpuHTfZdNeBfeiMP3SQmJhj0SSeWI9Zb8xGsTq3SmoBVnGzP-h1E2m9kjW5iFwKxbIuxAxIX488McY1vjBAvcNz5PSmAXrLrQd6TLL2JOabxYTeomCMu57aKesDXcA5KtesI7WIBUizty4-KnhVnAg6ceY76eYuQirMJSN8bZUvJacQDyB5d9Pt__iyplQ3XDV24psS1gs-qyRkz-focSzZJEbRNFeObFWNLHqlv8_U8izNgkQZQwkAWSd_zJ-px9f6lwDtMQUsYAsUo-hqWETUF9NgG131VCmGUtOqqnlKA8f25GSgHELfwdbqXMptu1",
-      "contentType" : "image/png",
+      "content" : "http://localhost:7777/svg/PLB1JiCm3BttAwoTDXWJHzG36jg4X8GuWCG5eSfBlCqqJQB4dJJG_fsqPLixSaXL-zdFVddpA1YahWmiKH0MpXXIuW8i3CP8CSjYoTPZm0fK4teG2RogXPwKis_yJN3RWmHNMwrSi1JWBiiygX8t1ACAsSxyVWG_6QJJTcePpuHTfZdNeBfeiMP3SQmJhj0SSeWI9Zb8xGsTq3SmoBVnGzP-h1E2m9kjW5iFwKxbIuxAxIX488McY1vjBAvcNz5PSmAXrLrQd6TLL2JOabxYTeomCMu57aKesDXcA5KtesI7WIBUizty4-KnhVnAg6ceY76eYuQirMJSN8bZUvJacQDyB5d9Pt__iyplQ3XDV24psS1gs-qyRkz-focSzZJEbRNFeObFWNLHqlv8_U8izNgkQZQwkAWSd_zJ-px9f6lwDtMQUsYAsUo-hqWETUF9NgG131VCmGUtOqqnlKA8f25GSgHELfwdbqXMptu1",
+      "contentType" : "image/svg+xml",
       "description" : "Classes responsible for file discovery, JSONL loading, and metadata validation",
-      "elementId" : "4",
+      "elementId" : "6",
       "key" : "CollectorClassDiagram",
       "name" : "collector_classes.puml",
-      "order" : 8,
+      "order" : 5,
       "title" : "collector_classes.puml"
     }, {
-      "content" : "http://localhost:7777/png/bLJVJzim47xFNt7QmnH4WR6zJ9KsqQQTMb4OQiHU4BACSxHU7TkodMuTsl--SqfAIFQmMLNItDtttMzV-C1Tg4e5kUKQhhYrw21Jt7lqIU8tKblkU0aYYaOXEFbG1PmBetFv2-5ToyIPIXV2E4qC7vF4Sh7XAuGt9P5AlJgrkpVmb2H0fsQ3BrBXml22x9zgSJp7e4Z4ldkZsICPfF5XULWFmGTtD8I5zE5k8aMuhp6_sunN67Z10nzNKdLf7wACbSyMJ1cpgMpwyasqRNBo5DztKeS1lBZRSwqmiE2ueBJO5fsNHgSTvZtyg8ww7-XKL-K4XUa6MTGoflWENLe_sPQh2eT0SRJ8ulbwm_BfzQHMmITgHKknd6RJ-RTfepjlwxBHOZ4UPPUDylqhnjaLcusk9_biT7c0VpXOJEPBTdCxNippsNJPznpL-UqupvRpyOl-l9z_dBRC8G_cTVuYof1vKdlsw4p9OabJhjHUrkxG0FvQyW74pc0SbMkZyK1-0inJsuGfInejteooJoFn029FGs0i2pkBJFCIcx7hS4MgwBvF5AM7vXzGhxBFZ0xuCzmuO_cgKuCJiDK33UEQMXy9AU3Qs3_FOwYimi6-W7lDVGlhKA3SudyZZm6rasAzhtBwxxMM1TlWhbSaIfT-hGK_FVtSsyuXM6Usia0FZl-8iHjN-2wglIg4g6-cfaDm1lMIGBqaFkbwYFZsg56SbRLA4aEJ3pnNAMdRHLo_IKCASKKbeOM7j_JV6xKb9hhzaEQygNRI1_R3u4NH0C_4ce8bkaUaJn6ltGlK1Tt9oHy0",
-      "contentType" : "image/png",
+      "content" : "http://localhost:7777/svg/bLJVJzim47xFNt7QmnH4WR6zJ9KsqQQTMb4OQiHU4BACSxHU7TkodMuTsl--SqfAIFQmMLNItDtttMzV-C1Tg4e5kUKQhhYrw21Jt7lqIU8tKblkU0aYYaOXEFbG1PmBetFv2-5ToyIPIXV2E4qC7vF4Sh7XAuGt9P5AlJgrkpVmb2H0fsQ3BrBXml22x9zgSJp7e4Z4ldkZsICPfF5XULWFmGTtD8I5zE5k8aMuhp6_sunN67Z10nzNKdLf7wACbSyMJ1cpgMpwyasqRNBo5DztKeS1lBZRSwqmiE2ueBJO5fsNHgSTvZtyg8ww7-XKL-K4XUa6MTGoflWENLe_sPQh2eT0SRJ8ulbwm_BfzQHMmITgHKknd6RJ-RTfepjlwxBHOZ4UPPUDylqhnjaLcusk9_biT7c0VpXOJEPBTdCxNippsNJPznpL-UqupvRpyOl-l9z_dBRC8G_cTVuYof1vKdlsw4p9OabJhjHUrkxG0FvQyW74pc0SbMkZyK1-0inJsuGfInejteooJoFn029FGs0i2pkBJFCIcx7hS4MgwBvF5AM7vXzGhxBFZ0xuCzmuO_cgKuCJiDK33UEQMXy9AU3Qs3_FOwYimi6-W7lDVGlhKA3SudyZZm6rasAzhtBwxxMM1TlWhbSaIfT-hGK_FVtSsyuXM6Usia0FZl-8iHjN-2wglIg4g6-cfaDm1lMIGBqaFkbwYFZsg56SbRLA4aEJ3pnNAMdRHLo_IKCASKKbeOM7j_JV6xKb9hhzaEQygNRI1_R3u4NH0C_4ce8bkaUaJn6ltGlK1Tt9oHy0",
+      "contentType" : "image/svg+xml",
       "description" : "Classes for loading spans, building metadata lookups, decoding enums, creating OTel spans, and propagating context",
-      "elementId" : "10",
+      "elementId" : "7",
       "key" : "MapperClassDiagram",
       "name" : "mapper_classes.puml",
-      "order" : 9,
+      "order" : 6,
       "title" : "mapper_classes.puml"
     }, {
-      "content" : "http://localhost:7777/png/jLHDZzCm4BtdLunwGAdOHEM6Ah5QM420-AXeRmX5hZDjhNNiO8-xB8Z_pZZ9fcaJZaGvM9dtPkQz6UV6at0KAWqR9oGwU09lVjRM4HzljV0UVPBuEsLguKG5CdvwIUJKDX2-bzQirI-4nG3YR32bjCvmXkT9KWjv9_O8CspIAhFFwuSP_4uIuAV91r_Hs-0alXMIh7lW87JFKv0E1M4g7clw9RnMakRBdjM3iwm_UdH79J4tea9umSMbq1cnGgu_6w6EwBoo9WAVvOjySK94NjxnYWws14-kGVmPYcZzcvBWaK9TK1ClQcUFgaINMj9rWQQihJBKvBo2gKgibEbwKgRZpCvuIDlYgoxtLTVCVDpbhJNUQbpNmlHp7lRQJYdr76Udr_WZe97uBUA_SoSd7hiVD0rL7WALzjwa3Fji3Gv2EyjZAdOw-4DAga8RgAYKrefBi7WcRAtLusQ_R3wk_j5f1cVM_Jy5PmsnmHAzj-wJCBpKvzQ9iYnYrJZY5fNsfxPkJx-qQ33IjQhgTZuz6hBhgRdrb5U2vE6S4IcNxZtAuVVomkNvzSN-Be7lzaxjWqCFzueEf-js3epKaIrBtiozybpKG--1JqQuR5fPvDjuru5ix2F68Irn6_RpwIIZJHbc-20muevAD3XujzciakI65uZ_UybV",
-      "contentType" : "image/png",
+      "content" : "http://localhost:7777/svg/jLHDZzCm4BtdLunwGAdOHEM6Ah5QM420-AXeRmX5hZDjhNNiO8-xB8Z_pZZ9fcaJZaGvM9dtPkQz6UV6at0KAWqR9oGwU09lVjRM4HzljV0UVPBuEsLguKG5CdvwIUJKDX2-bzQirI-4nG3YR32bjCvmXkT9KWjv9_O8CspIAhFFwuSP_4uIuAV91r_Hs-0alXMIh7lW87JFKv0E1M4g7clw9RnMakRBdjM3iwm_UdH79J4tea9umSMbq1cnGgu_6w6EwBoo9WAVvOjySK94NjxnYWws14-kGVmPYcZzcvBWaK9TK1ClQcUFgaINMj9rWQQihJBKvBo2gKgibEbwKgRZpCvuIDlYgoxtLTVCVDpbhJNUQbpNmlHp7lRQJYdr76Udr_WZe97uBUA_SoSd7hiVD0rL7WALzjwa3Fji3Gv2EyjZAdOw-4DAga8RgAYKrefBi7WcRAtLusQ_R3wk_j5f1cVM_Jy5PmsnmHAzj-wJCBpKvzQ9iYnYrJZY5fNsfxPkJx-qQ33IjQhgTZuz6hBhgRdrb5U2vE6S4IcNxZtAuVVomkNvzSN-Be7lzaxjWqCFzueEf-js3epKaIrBtiozybpKG--1JqQuR5fPvDjuru5ix2F68Irn6_RpwIIZJHbc-20muevAD3XujzciakI65uZ_UybV",
+      "contentType" : "image/svg+xml",
       "description" : "Classes for resource creation, tracer setup, console debugging, and OTLP HTTP export to Jaeger",
-      "elementId" : "21",
-      "key" : "TracerClassDiagram",
+      "elementId" : "8",
+      "key" : "ExporterClassDiagram",
       "name" : "tracer_exporter_classes.puml",
-      "order" : 10,
+      "order" : 7,
       "title" : "tracer_exporter_classes.puml"
+    }, {
+      "content" : "http://localhost:7777/svg/pLZRRXit47tNLn11qKYDvCPkqOU58aHrt5Q5Su5jj2y126gNabZlaXkIwqjJ5_c8V66-f3CazyBLkYrGD8bXnBixmvd3uPaByzHOfcrLv8GVBq_9XMQfa5joAjQQwTlHo5mAMJBD2fBcp9YbjLgiAyjNgPBdudTE7dTKjbfLvKhkk1QMoPIJez6ePEabstBo0EqdYVKE7f2ten4X3yc7z-_yBpcHLS4riq99qtx-LB-8ZWCYeie0YjhRaWDi0Z-6oumyWRtZY-Of5rSStW_TUyhoV0sxflo6fnKk1T4HYEuQerQL8gMPWALExgsMrJeN1gBNc3RLsgGGSFVfC3B1mr6TibkkBn3QV4x69rEbqvt89cGjRC7C9Kb89QJzxbjgoM8H7DcSuZbmAfNa-A7srmZChY1US8XsUz8gAxlImrXgqqXwj6VPhNz2qCSV19xt5T14hG3FUzw30jePK83u1m2DYqRjha-xNrXUSO9dQyZOM5sbrap8noEPIojoVe6CUCujovXbxYZFfxdOxkmQu4s81zQUu2CI4ebUSMsGGWdgm8SWvj8AUqj5HlnFIuEWK6gLScCQZOI0_9kZHhvJnbB92juOYEnx1hVoFVUfoh2GtBCQmlqtnjl4gCMzXAaFCWJll6JosR-CMnIOlQXuFo4cdTG1oZmc6wLzvXlmPuRYk1zbTfihbb63fH9s2NyQMPghzB8DKAuWNFXF4EUOsEI-utDbcqAb75uCA6lXa5YLlfe5SLpZXhBa64FywQloFsIHH-bF-Y4vMwvM2LPdfJFJ1WnO1RtB4mEsF0tQ8MAFo2Qlp0wrCjueXR0v--E68qb8srKszOSv3OUMx5VdwUkQp2GYnRGvY_unJ2AdBMqJw9JulCekfZLVvKR1Tmy6dhlE_ZzWVtfa_dKsyt-8grz9cvE3R0eWVeKv0L1z7jo9CTKaEeTPXa5NXkxWifumoF-YhjDMaP_FNxuu9HkHStCGrlm0Bn1BkpFm_OPdXDc8SiIAWX_Knnlv7TV1lSRNxvbDTnX8CrxZ8yJr2WgWqlCcl8i9VbGYwwwBcicuGPlqsanlwPPRvmlXlmBquyazrHiK8pljWaYneOGB72rWQhoXtfnx3j8QNgqGIp5KaBf5IVUW3DEAlzBgIcIV5QrQJ3MjddD8luV0ATXApYrmuiExzsHTRJQWL3094xFs_GPZLtFbBKJ2YlGEJs05VC8PUuod67lvikuHt7e6GJgFemxKEtdlrsKp-gFz7EwfiopxRmnpcFUO79HS_UseVGI2Dd5rlca6Kp7oa5bLY7I-LYfVTAXCVRWekNSJC-BIrTLHwk6rZNyMmZtCTvU_chPjNuet5QUbrVEuKYpYBSGCg8iorEZXxvflXG4h9pV2_WGbBOSfCWvt9ohCTjIwMdiPUCPpVu7RYV9JN-8yjdOshB26hvNTkViJZc-jpFryDPij-jSzFntLOr5lIdSB-bSvMD0TKti-3WuMPE3gbeJ-F0wtjea7x-SPTUsc5XxrL2zgVXoKdYy71RKxjkgP1YeBNbFxzIb9EgLWik_6mU-LD7HJZmBUw6iPMV7kuqNDdc9IZ_QikutrUZDw37doMexR31bs1PtNCe6TkwwlQXE7iWVjdb1sKn_S-iplkcm1NYjzQSYr0AwrXd1mY0bK-suNklWE-7QxDVVfnwpiw8yWGQMo74cAkuvtYknisiyuTAG9zffbPTNCrK98cUiTbt7TMppfrZTSmA202KjslaIGRSKqavPp780aozkPEjoM2AeVZF0kXVW6K7OfyRAoPMKJyiN9yVAKNfmjZrSlVgJFbXTB-cnrzhKhLnoOH_sWCIz5jg1pQnO7lnabyrRkSxKPEFOKUtWqtYCT8ZmHCFD2oLcgobkspc4-bl1Mg2jymHYucw7BB2pRM6pgsy6e_JyYb0TfCyL3mseczmw4f_1O5VbV",
+      "contentType" : "image/svg+xml",
+      "description" : "Classes and enumerations of the eCAL tracing library including CSpan, CTraceProvider, CTracingWriter, and supporting data structures",
+      "elementId" : "14",
+      "key" : "TracingLibraryClassDiagram",
+      "name" : "tracing_library.puml",
+      "order" : 8,
+      "title" : "tracing_library.puml"
     } ],
     "systemContextViews" : [ {
-      "automaticLayout" : {
-        "applied" : false,
-        "edgeSeparation" : 0,
-        "implementation" : "Graphviz",
-        "nodeSeparation" : 300,
-        "rankDirection" : "LeftRight",
-        "rankSeparation" : 300,
-        "vertices" : false
+      "description" : "Context diagram showing eCAL tracing system, eCAL System, and Jaeger",
+      "dimensions" : {
+        "height" : 1290,
+        "width" : 2365
       },
-      "description" : "Context diagram showing eCAL tracing backend, eCAL Core, and Jaeger",
       "elements" : [ {
         "id" : "1",
-        "x" : 0,
-        "y" : 0
+        "x" : 225,
+        "y" : 633
       }, {
         "id" : "2",
-        "x" : 0,
-        "y" : 0
+        "x" : 1765,
+        "y" : 348
       }, {
         "id" : "3",
-        "x" : 0,
-        "y" : 0
+        "x" : 200,
+        "y" : 148
       }, {
-        "id" : "40",
-        "x" : 0,
-        "y" : 0
+        "id" : "4",
+        "x" : 930,
+        "y" : 143
+      }, {
+        "id" : "20",
+        "x" : 940,
+        "y" : 683
       } ],
       "enterpriseBoundaryVisible" : true,
       "key" : "SystemContext",
       "name" : "System Context View: eCAL Tracing Backend",
       "order" : 1,
       "relationships" : [ {
-        "id" : "42"
+        "id" : "21"
       }, {
-        "id" : "43"
+        "id" : "22"
       }, {
-        "id" : "44"
+        "id" : "23"
       }, {
-        "id" : "45"
+        "id" : "24"
+      }, {
+        "id" : "25"
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "29"
       } ],
-      "softwareSystemId" : "3",
-      "title" : "eCAL Tracing Backend - System Context"
+      "softwareSystemId" : "4",
+      "title" : "eCAL Tracing System - System Context"
     } ]
   }
 }

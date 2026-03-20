@@ -21,3 +21,4 @@ services:
       - "./structurizr:/usr/local/structurizr"
       - "./doc/puml:/usr/local/structurizr/puml"
       - "./doc/adr:/usr/local/structurizr/adr"
+      - "./doc:/usr/local/structurizr/doc"

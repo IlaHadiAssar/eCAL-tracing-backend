@@ -1,0 +1,153 @@
+@startuml eCAL Tracing Library
+
+skinparam classAttributeIconSize 0
+skinparam groupInheritance 2
+
+package "eCAL::tracing" {
+
+  ' ─── Enumerations ───────────────────────────────────────────
+
+  enum operation_type {
+    send = 0
+    receive = 1
+    callback_execution = 2
+  }
+
+  enum topic_direction {
+    publisher = 0
+    subscriber = 1
+  }
+
+  enum eTracingLayerType << (E,orchid) bitmask : uint64_t >> {
+    tl_trace_none    = 0
+    tl_trace_shm     = 1 << 0
+    tl_trace_udp     = 1 << 1
+    tl_trace_tcp     = 1 << 2
+    tl_trace_shm_udp = shm | udp
+    tl_trace_shm_tcp = shm | tcp
+    tl_trace_udp_tcp = udp | tcp
+    tl_trace_all     = shm | udp | tcp
+  }
+
+  ' ─── Value types (structs) ──────────────────────────────────
+
+  class STopicMetadata << (S,lightblue) struct >> {
+    + tracing_version : string
+    + entity_id       : uint64_t
+    + process_id      : int32_t
+    + host_name       : string
+    + topic_name      : string
+    + encoding        : string
+    + type_name       : string
+    + direction       : topic_direction
+  }
+
+  class SSpanData << (S,lightblue) struct >> {
+    + entity_id    : uint64_t
+    + topic_id     : uint64_t  ' 0 for send spans
+    + process_id   : uint64_t
+    + payload_size : size_t
+    + clock        : long long
+    + layer        : uint64_t
+    + start_ns     : long long
+    + end_ns       : long long
+    + op_type      : operation_type
+  }
+
+  ' ─── CSpan ──────────────────────────────────────────────────
+
+  class CSpan {
+    ' RAII: records start_ns on construction,
+    ' end_ns + flush on destruction
+    + CSpan(topic_id : STopicId, clock, layer : eTracingLayerType,\n         payload_size, op_type : operation_type)
+    + CSpan(entity_id : EntityIdT, topic_info : TopicInfo,\n         clock, layer : eTracingLayerType,\n         payload_size, op_type : operation_type)
+    + ~CSpan()
+    --
+    - data : SSpanData
+  }
+
+  ' ─── CTracingWriter ─────────────────────────────────────────
+
+  class CTracingWriter {
+    ' Serialises spans and metadata to JSONL files.
+    ' File paths fixed at construction time.
+    + CTracingWriter()
+    + writeBatchSpans(batch : vector<SSpanData>) : void
+    + writeTopicMetadata(metadata : STopicMetadata) : void
+    + getSpansFilePath()        : string
+    + getTopicMetadataFilePath(): string
+    --
+    - spans_mutex_    : mutex
+    - metadata_mutex_ : mutex
+    - timestamp_      : string
+  }
+
+  ' ─── CTraceProvider ─────────────────────────────────────────
+
+  class CTraceProvider {
+    ' Meyer's singleton — buffer manager for spans.
+    + {static} getInstance() : CTraceProvider&
+    + setBatchSize(size : size_t) : void
+    + bufferSpan(span_data : SSpanData) : void
+    + addTopicMetadata(metadata : STopicMetadata) : void
+    + getSpans() : vector<SSpanData>
+    + flushSpans() : void
+    + getSpansFilePath()        : string
+    + getTopicMetadataFilePath(): string
+    --
+    - {static} flush_done_ : atomic<bool>
+    - span_buffer_  : vector<SSpanData>
+    - batch_size_   : size_t
+    - buffer_mutex_ : mutex
+    - writer_       : unique_ptr<CTracingWriter>
+    --
+    - CTraceProvider()
+    - ~CTraceProvider()
+    - registerExitHandlers() : void
+    - {static} atExitHandler() : void
+  }
+
+  ' ─── Relationships ──────────────────────────────────────────
+
+  ' SSpanData uses both enums
+  SSpanData      *--> operation_type   : op_type
+  STopicMetadata *--> topic_direction  : direction
+  SSpanData      ..>  eTracingLayerType : layer (bitmask)
+
+  ' CSpan owns one SSpanData
+  CSpan          *--> SSpanData        : data
+
+  ' CSpan destructor calls CTraceProvider::bufferSpan()
+  CSpan          ..>  CTraceProvider   : ~CSpan() calls\nbufferSpan()
+
+  ' CTraceProvider owns one CTracingWriter
+  CTraceProvider *--> CTracingWriter   : writer_\n(unique_ptr)
+
+  ' CTraceProvider contains a buffer of SSpanData
+  CTraceProvider o--> SSpanData        : span_buffer_\n(vector)
+
+  ' CTracingWriter works with SSpanData and STopicMetadata
+  CTracingWriter ..>  SSpanData        : writes
+  CTracingWriter ..>  STopicMetadata   : writes
+
+}
+
+note top of CTraceProvider
+  Singleton (Meyer's).
+  Auto-flushes when span_buffer_ >= batch_size_.
+  atexit handler guarantees final flush on process exit.
+end note
+
+note top of CTracingWriter
+  Output: $ECAL_TRACING_DATA_DIR/
+    ecal_spans_<pid>_<ts>.jsonl
+    ecal_topic_metadata_<pid>_<ts>.jsonl
+end note
+
+note right of CSpan
+  Non-copyable, non-movable.
+  send ctor  : uses STopicId
+  receive ctor: uses EntityIdT + TopicInfo
+end note
+
+@enduml
