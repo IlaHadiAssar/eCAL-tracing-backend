@@ -2,6 +2,7 @@
 src/ecal_tracing_backend.egg-info
 __pycache__
 data/*
+ecal_tracing_backend.egg-info
 
 # Structurizr Lite runtime artifacts
 structurizr/.structurizr/

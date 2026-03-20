@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: ecal-tracing-backend
-Version: 0.1.0
-Summary: OpenTelemetry tracing backend for eCAL publisher/subscriber spans
-Requires-Python: >=3.10
-Requires-Dist: opentelemetry-api
-Requires-Dist: opentelemetry-sdk
-Requires-Dist: opentelemetry-exporter-otlp
-Requires-Dist: pre-commit
