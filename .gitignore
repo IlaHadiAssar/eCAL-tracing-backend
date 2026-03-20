@@ -8,3 +8,4 @@ ecal_tracing_backend.egg-info
 structurizr/.structurizr/
 structurizr/adr/
 structurizr/decisions/
+structurizr/workspace.json
