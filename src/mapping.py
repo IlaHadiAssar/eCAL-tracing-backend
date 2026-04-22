@@ -1,245 +1,177 @@
-import json
 from collections import defaultdict
 from opentelemetry import trace
-from typing import List, Dict, Any
+from typing import Any, Dict, List, Optional
+
+from .datatypes import (
+    OperationType,
+    TracingLayerType,
+    SpanData,
+    SPublisherSpanData,
+    SSubscriberSpanData,
+    STopicMetadata,
+)
+from .exporting import setup_tracer_provider
+
+
+class SpanMapper:
+
+    def __init__(self, all_spans: List[SpanData], all_metadata: List[STopicMetadata]):
+        self._all_spans = all_spans
+        self._metadata_lookup = {meta.entity_id: meta for meta in all_metadata}
+
+    def _get_tracing_version(self) -> str:
+        for meta in self._metadata_lookup.values():
+            if meta.tracing_version:
+                return meta.tracing_version
+        return "unknown"
+
+
+    @staticmethod
+    def _set_meta_attributes(span, meta: STopicMetadata) -> None:
+        span.set_attribute("ecal.topic_name", meta.topic_name)
+        span.set_attribute("ecal.type_name", meta.type_name)
+        span.set_attribute("ecal.encoding", meta.encoding)
+        span.set_attribute("ecal.host_name", meta.host_name)
+        span.set_attribute("ecal.direction", meta.direction)
+        span.set_attribute("ecal.tracing_version", meta.tracing_version)
+
+    @classmethod
+    def _set_publisher_attributes(cls, span, data: SPublisherSpanData,
+                                  meta: Optional[STopicMetadata]) -> None:
+        span.set_attribute("ecal.entity_id", data.entity_id)
+        span.set_attribute("ecal.layer", TracingLayerType(data.layer).name.lower())
+        span.set_attribute("ecal.layer_raw", data.layer)
+        span.set_attribute("ecal.process_id", data.process_id)
+        span.set_attribute("ecal.payload_size", data.payload_size)
+        span.set_attribute("ecal.clock", data.clock)
+        span.set_attribute("ecal.op_type", OperationType(data.op_type).name.lower())
+        if meta is not None:
+            cls._set_meta_attributes(span, meta)
+
+    @classmethod
+    def _set_subscriber_attributes(cls, span, data: SSubscriberSpanData,
+                                    meta: Optional[STopicMetadata]) -> None:
+        span.set_attribute("ecal.entity_id", data.entity_id)
+        span.set_attribute("ecal.topic_id", data.topic_id)
+        span.set_attribute("ecal.layer", TracingLayerType(data.layer).name.lower())
+        span.set_attribute("ecal.layer_raw", data.layer)
+        span.set_attribute("ecal.process_id", data.process_id)
+        span.set_attribute("ecal.payload_size", data.payload_size)
+        span.set_attribute("ecal.clock", data.clock)
+        span.set_attribute("ecal.op_type", OperationType(data.op_type).name.lower())
+        if meta is not None:
+            cls._set_meta_attributes(span, meta)
 
 
 # ---------------------------------------------------------------------------
-# C++ enum mirrors  (namespace tracing)
+# Span creation per operation type
 # ---------------------------------------------------------------------------
 
-# operation_type – specifies the type of operation being traced
-OP_SEND = 0
-OP_RECEIVE = 1
-OP_CALLBACK = 2
-OP_SHM_HANDSHAKE = 3
+    def _create_send_spans(
+        self,
+        send_spans: List[SPublisherSpanData],
+        tracer,
+    ) -> Dict[tuple, Any]:
 
-OP_TYPE_NAMES = {
-    OP_SEND: "send",
-    OP_RECEIVE: "receive",
-    OP_CALLBACK: "callback_execution",
-    OP_SHM_HANDSHAKE: "shm_handshake",
-}
+        publisher_span_contexts: Dict[tuple, Any] = {}
 
-# topic_direction – direction of the topic
-DIR_PUBLISHER = 0
-DIR_SUBSCRIBER = 1
+        for data in send_spans:
+            meta = self._metadata_lookup.get(data.entity_id)
 
-DIR_NAMES = {
-    DIR_PUBLISHER: "publisher",
-    DIR_SUBSCRIBER: "subscriber",
-}
+            span = tracer.start_span("send", start_time=data.start_ns)
+            self._set_publisher_attributes(span, data, meta)
 
-# eTracingLayerType – bitmask for active transport layers
-TL_NONE = 0
-TL_SHM = 1 << 0   # 1
-TL_UDP = 1 << 1   # 2
-TL_TCP = 1 << 2   # 4
+            publisher_span_contexts[(data.entity_id, data.clock)] = span.get_span_context()
+            span.end(end_time=data.end_ns)
 
-_LAYER_FLAGS = [
-    (TL_SHM, "shm"),
-    (TL_UDP, "udp"),
-    (TL_TCP, "tcp"),
-]
+        return publisher_span_contexts
 
+    def _create_receive_spans(
+        self,
+        receive_spans: List[SSubscriberSpanData],
+        tracer,
+        publisher_span_contexts: Dict[tuple, Any],
+    ) -> Dict[tuple, Any]:
+        receive_span_contexts: Dict[tuple, Any] = {}
 
-def decode_layer(layer_value: int) -> str:
-    """Decode a bitmask ``layer`` value into a human-readable string.
+        for data in receive_spans:
+            meta = self._metadata_lookup.get(data.entity_id)
 
-    Examples:
-        1  -> "shm"
-        3  -> "shm+udp"
-        7  -> "shm+udp+tcp"
-        0  -> "none"
-    """
-    if not layer_value:
-        return "none"
-    parts = [name for flag, name in _LAYER_FLAGS if layer_value & flag]
-    return "+".join(parts) if parts else "none"
+            parent_key = (data.topic_id, data.clock)
+            pub_ctx = None
+            if parent_key in publisher_span_contexts:
+                pub_ctx = trace.set_span_in_context(
+                    trace.NonRecordingSpan(publisher_span_contexts[parent_key])
+                )
 
+            span = tracer.start_span("receive", context=pub_ctx,
+                                     start_time=data.start_ns)
+            self._set_subscriber_attributes(span, data, meta)
 
-def load_json_file(filepath: str) -> List[Dict[str, Any]]:
-    """Load JSONL file with span data (one JSON object per line)"""
-    results = []
-    with open(filepath, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                results.append(json.loads(line))
-    return results
+            recv_key = (data.topic_id, data.clock, data.entity_id)
+            receive_span_contexts[recv_key] = span.get_span_context()
+            span.end(end_time=data.end_ns)
 
+        return receive_span_contexts
 
-def build_metadata_lookup(metadata_list: List[Dict]) -> Dict[int, Dict[str, Any]]:
-    """Build a lookup from entity_id to metadata attributes"""
-    return {meta['entity_id']: meta for meta in metadata_list}
+    def _create_callback_spans(
+        self,
+        callback_spans: List[SSubscriberSpanData],
+        tracer,
+        receive_span_contexts: Dict[tuple, Any],
+    ) -> None:
 
+        for data in callback_spans:
+            meta = self._metadata_lookup.get(data.entity_id)
 
-def get_tracing_version(metadata_lookup: Dict[int, Dict[str, Any]]) -> str:
-    """Extract the tracing_version from the first metadata entry that has one."""
-    for meta in metadata_lookup.values():
-        version = meta.get('tracing_version')
-        if version:
-            return version
-    return "unknown"
-
-
-def set_meta_attributes(span, meta: Dict[str, Any]) -> None:
-    """Set common eCAL metadata attributes on a span"""
-    if meta:
-        for key in ('topic_name', 'type_name', 'encoding', 'host_name',
-                     'direction', 'tracing_version'):
-            val = meta.get(key, '')
-            if val:
-                span.set_attribute(f"ecal.{key}", val)
-
-
-def enrich_spans(spans: List[Dict], metadata_lookup: Dict[int, Dict[str, Any]],
-                 id_key: str = 'entity_id') -> None:
-    """Pre-merge metadata into each span record to avoid repeated lookups"""
-    for span in spans:
-        meta = metadata_lookup.get(span[id_key], {})
-        span['_meta'] = meta
-        span['_topic_name'] = meta.get('topic_name', str(span[id_key]))
-        span['_direction'] = meta.get('direction', '')
-
-
-def _set_common_attributes(span, data: Dict[str, Any], op_type_name: str) -> None:
-    """Set the standard set of eCAL attributes on an OTel span."""
-    layer_raw = data.get('layer', 0)
-    span.set_attribute("ecal.entity_id", data['entity_id'])
-    span.set_attribute("ecal.layer", decode_layer(layer_raw))
-    span.set_attribute("ecal.layer_raw", layer_raw)
-    span.set_attribute("ecal.process_id", data.get('process_id'))
-    span.set_attribute("ecal.payload_size", data.get('payload_size'))
-    span.set_attribute("ecal.clock", data['clock'])
-    span.set_attribute("ecal.op_type", op_type_name)
-    topic_id = data.get('topic_id', 0)
-    if topic_id:
-        span.set_attribute("ecal.topic_id", topic_id)
-    set_meta_attributes(span, data['_meta'])
-
-
-def create_spans_from_data(all_spans: List[Dict],
-                           metadata_lookup: Dict[int, Dict[str, Any]],
-                           tracer) -> None:
-    """Create OpenTelemetry spans from a unified list of eCAL span records.
-
-    Spans are classified as publisher or subscriber based on the ``direction``
-    field in their associated metadata entry.  The hierarchy is:
-
-        send  ->  shm_handshake  (same entity_id & clock)
-        send  ->  receive  ->  callback  (linked via topic_id & clock)
-
-    Args:
-        all_spans: Flat list of span records (unified schema).
-        metadata_lookup: entity_id -> metadata dict.
-        tracer: An OpenTelemetry Tracer instance.
-    """
-    # Pre-enrich all spans with metadata (adds _meta, _topic_name, _direction)
-    enrich_spans(all_spans, metadata_lookup)
-
-    # Classify spans by direction (from metadata) and op_type
-    publisher_data = [s for s in all_spans if s['_direction'] == 'publisher']
-    subscriber_data = [s for s in all_spans if s['_direction'] == 'subscriber']
-
-    send_spans = [p for p in publisher_data if p.get('op_type') == OP_SEND]
-    shm_handshake_spans = [p for p in publisher_data if p.get('op_type') == OP_SHM_HANDSHAKE]
-
-    # Map publisher spans by (entity_id, clock) for context propagation
-    publisher_span_contexts: Dict[tuple, Any] = {}
-
-    # --- Publisher send spans (each clock tick starts a new trace) ---
-    print("\n=== Creating Publisher Spans ===")
-    for pub_data in send_spans:
-        entity_id = pub_data['entity_id']
-        clock = pub_data['clock']
-
-        span_name = f"ecal.publish.{pub_data['_topic_name']}"
-        span = tracer.start_span(span_name, start_time=pub_data['start_ns'])
-        _set_common_attributes(span, pub_data, "send")
-
-        publisher_span_contexts[(entity_id, clock)] = span.get_span_context()
-        span.end(end_time=pub_data['end_ns'])
-
-        print(f"Created publisher span: {span_name} [clock={clock}]")
-
-    # --- SHM handshake spans (children of send at same entity_id & clock) ---
-    print("\n=== Creating SHM Handshake Spans ===")
-    for hs_data in shm_handshake_spans:
-        entity_id = hs_data['entity_id']
-        clock = hs_data['clock']
-
-        span_name = f"ecal.shm_handshake.{hs_data['_topic_name']}"
-
-        parent_key = (entity_id, clock)
-        parent_ctx = None
-        if parent_key in publisher_span_contexts:
-            parent_ctx = trace.set_span_in_context(
-                trace.NonRecordingSpan(publisher_span_contexts[parent_key])
-            )
-
-        span = tracer.start_span(span_name, context=parent_ctx,
-                                 start_time=hs_data['start_ns'])
-        _set_common_attributes(span, hs_data, "shm_handshake")
-        span.end(end_time=hs_data['end_ns'])
-
-        matched = parent_key in publisher_span_contexts
-        print(f"Created shm_handshake span: {span_name} [clock={clock}]" +
-              (f" -> child of send [clock={clock}]" if matched else " (no matching send)"))
-
-    # --- Subscriber spans grouped by (topic_id, clock) ---
-    sub_groups = defaultdict(lambda: {OP_RECEIVE: [], OP_CALLBACK: []})
-    for sub_data in subscriber_data:
-        topic_id = sub_data.get('topic_id')
-        clock = sub_data['clock']
-        op_type = sub_data.get('op_type', OP_RECEIVE)
-        sub_groups[(topic_id, clock)][op_type].append(sub_data)
-
-    receive_span_contexts: Dict[tuple, Any] = {}
-
-    print("\n=== Creating Subscriber Spans ===")
-    for (topic_id, clock), spans_by_type in sorted(sub_groups.items(),
-                                                    key=lambda x: x[0][1]):
-        # Look up matching publisher span via topic_id == publisher entity_id
-        parent_key = (topic_id, clock)
-        pub_ctx = None
-        if parent_key in publisher_span_contexts:
-            pub_ctx = trace.set_span_in_context(
-                trace.NonRecordingSpan(publisher_span_contexts[parent_key])
-            )
-
-        # Receive spans — children of publisher send
-        for sub_data in spans_by_type[OP_RECEIVE]:
-            entity_id = sub_data['entity_id']
-            span_name = f"ecal.receive.{sub_data['_topic_name']}"
-            span = tracer.start_span(span_name, context=pub_ctx,
-                                     start_time=sub_data['start_ns'])
-            _set_common_attributes(span, sub_data, "receive")
-
-            receive_span_contexts[(topic_id, clock, entity_id)] = span.get_span_context()
-            span.end(end_time=sub_data['end_ns'])
-
-            matched = parent_key in publisher_span_contexts
-            print(f"Created receive span: {span_name} [clock={clock}]" +
-                  (f" -> child of publisher" if matched else " (no matching publisher)"))
-
-        # Callback spans — children of receive
-        for sub_data in spans_by_type[OP_CALLBACK]:
-            entity_id = sub_data['entity_id']
-            span_name = f"ecal.callback.{sub_data['_topic_name']}"
-
-            recv_key = (topic_id, clock, entity_id)
+            recv_key = (data.topic_id, data.clock, data.entity_id)
             recv_ctx = None
             if recv_key in receive_span_contexts:
                 recv_ctx = trace.set_span_in_context(
                     trace.NonRecordingSpan(receive_span_contexts[recv_key])
                 )
 
-            span = tracer.start_span(span_name, context=recv_ctx,
-                                     start_time=sub_data['start_ns'])
-            _set_common_attributes(span, sub_data, "callback")
-            span.end(end_time=sub_data['end_ns'])
+            span = tracer.start_span("callback", context=recv_ctx,
+                                     start_time=data.start_ns)
+            self._set_subscriber_attributes(span, data, meta)
+            span.end(end_time=data.end_ns)
 
-            matched = recv_key in receive_span_contexts
-            print(f"Created callback span: {span_name} [clock={clock}]" +
-                  (f" -> child of receive" if matched else " (no matching receive)"))
+
+# ---------------------------------------------------------------------------
+# Orchestration
+# ---------------------------------------------------------------------------
+
+    def _create_spans_from_data(self, spans: List[SpanData], tracer) -> None:
+        send_spans = [s for s in spans if s.op_type == OperationType.SEND]
+        receive_spans = [s for s in spans if s.op_type == OperationType.RECEIVE]
+        callback_spans = [s for s in spans if s.op_type == OperationType.CALLBACK_EXECUTION]
+
+        publisher_span_contexts = self._create_send_spans(send_spans, tracer)
+
+        receive_span_contexts = self._create_receive_spans(
+            receive_spans, tracer, publisher_span_contexts,
+        )
+
+        self._create_callback_spans(callback_spans, tracer, receive_span_contexts)
+
+    def map_and_process(self, otlp_endpoint: str) -> List:
+        tracing_version = self._get_tracing_version()
+
+        spans_by_topic: Dict[str, List[SpanData]] = defaultdict(list)
+        for span in self._all_spans:
+            meta = self._metadata_lookup.get(span.entity_id)
+            topic_name = meta.topic_name if meta else str(span.entity_id)
+            spans_by_topic[topic_name].append(span)
+
+        print("Mapping...")
+        tracer_providers = []
+        for topic_name, topic_spans in sorted(spans_by_topic.items()):
+            tracer_provider, tracer = setup_tracer_provider(
+                otlp_endpoint=otlp_endpoint,
+                tracing_version=tracing_version,
+                service_name=topic_name,
+            )
+            tracer_providers.append(tracer_provider)
+            self._create_spans_from_data(topic_spans, tracer)
+
+        return tracer_providers
