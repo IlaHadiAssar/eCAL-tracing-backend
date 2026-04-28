@@ -6,6 +6,7 @@ from typing import List
 from ..datatypes import SpanData, STopicMetadata
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+SUPPORTED_TRACING_VERSIONS = {"1.0.0"}
 
 
 class Parser(ABC):
@@ -29,6 +30,27 @@ class Parser(ABC):
             raise FileNotFoundError(f"No {prefix} files found in {DATA_DIR}")
         return files
 
+    def _validate_metadata_tracing_version(self, metadata: List[STopicMetadata]) -> None:
+        versions = {
+            meta.tracing_version.strip()
+            for meta in metadata
+            if meta.tracing_version and meta.tracing_version.strip()
+        }
+
+        if not versions:
+            raise ValueError("No tracing_version found in metadata")
+
+        if len(versions) > 1:
+            sorted_versions = ", ".join(sorted(versions))
+            raise ValueError(f"Mixed tracing_version values found: {sorted_versions}")
+
+        version = next(iter(versions))
+        if version not in SUPPORTED_TRACING_VERSIONS:
+            supported = ", ".join(sorted(SUPPORTED_TRACING_VERSIONS))
+            raise ValueError(
+                f"Unsupported tracing_version '{version}'. Supported versions: {supported}"
+            )
+
     def load_spans(self) -> List[SpanData]:
         span_files = self._collect_files("ecal_spans_")
         all_spans: List[SpanData] = []
@@ -41,4 +63,5 @@ class Parser(ABC):
         all_metadata: List[STopicMetadata] = []
         for mf in meta_files:
             all_metadata.extend(self.parse_metadata_file(mf))
+        self._validate_metadata_tracing_version(all_metadata)
         return all_metadata
