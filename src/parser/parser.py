@@ -5,11 +5,17 @@ from typing import List
 
 from ..datatypes import SpanData, STopicMetadata
 
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
 SUPPORTED_TRACING_VERSIONS = {"1.0.0"}
 
 
+def resolve_data_dir(data_dir: str) -> str:
+    return os.path.abspath(os.path.expanduser(data_dir))
+
+
 class Parser(ABC):
+
+    def __init__(self, data_dir: str) -> None:
+        self.data_dir = resolve_data_dir(data_dir)
 
     @property
     @abstractmethod
@@ -25,9 +31,9 @@ class Parser(ABC):
         ...
 
     def _collect_files(self, prefix: str) -> List[str]:
-        files = sorted(glob.glob(os.path.join(DATA_DIR, f"{prefix}*{self.file_extension}")))
+        files = sorted(glob.glob(os.path.join(self.data_dir, f"{prefix}*{self.file_extension}")))
         if not files:
-            raise FileNotFoundError(f"No {prefix} files found in {DATA_DIR}")
+            raise FileNotFoundError(f"No {prefix} files found in {self.data_dir}")
         return files
 
     def _validate_metadata_tracing_version(self, metadata: List[STopicMetadata]) -> None:

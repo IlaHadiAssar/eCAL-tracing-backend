@@ -1,15 +1,32 @@
 """Entry point for the eCAL tracing backend."""
 
+import argparse
+from typing import Sequence
+
 from .parser import detect_parser
 from .context_propagator import ContextPropagator
 from .exporting import create_tracer_groups, export
 
+DEFAULT_DATA_DIR = "~/.ecal/traces"
 
-def main():
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    cli_parser = argparse.ArgumentParser(description="Export eCAL tracing data to OpenTelemetry")
+    cli_parser.add_argument(
+        "--data-dir",
+        default=DEFAULT_DATA_DIR,
+        help="Directory containing eCAL tracing data files (default: %(default)s)",
+    )
+    return cli_parser.parse_args(argv)
+
+
+def main(argv: Sequence[str] | None = None):
+    args = parse_args(argv)
+
     # parse -> propagate -> export
-    parser = detect_parser()
-    spans = parser.load_spans()
-    metadata = parser.load_metadata()
+    data_parser = detect_parser(args.data_dir)
+    spans = data_parser.load_spans()
+    metadata = data_parser.load_metadata()
 
     propagator = ContextPropagator(spans, metadata)
     spans_by_topic = propagator.group_spans_by_topic()

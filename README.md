@@ -22,18 +22,24 @@ pip install -e .
 ### Start Jaeger
 
 ```bash
-sudo docker-compose up -d
+sudo docker-compose up -d jaeger
 ```
 
 Jaeger UI will be available at http://localhost:16686.
 
 ### Run
 
-Place your eCAL span JSON files in `data/` (`ecal_publisher_spans.json` and `ecal_subscriber_spans.json`), then:
+Place your eCAL tracing JSONL files in `~/.ecal/traces`, then:
 
 ```bash
 source .venv/bin/activate
-python3 src/main.py
+ecal-tracing
+```
+
+To read from a different directory, pass `--data-dir`:
+
+```bash
+ecal-tracing --data-dir path/to/your/dir
 ```
 
 Traces will be exported to Jaeger via OTLP HTTP on port 4318.
