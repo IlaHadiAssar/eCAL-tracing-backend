@@ -29,17 +29,26 @@ Jaeger UI will be available at http://localhost:16686.
 
 ### Run
 
-Place your eCAL tracing JSONL files in `~/.ecal/traces`, then:
+If you want to force a specific input directory, pass `--data-dir`:
+
+```bash
+source .venv/bin/activate
+ecal-tracing --data-dir path/to/your/dir
+```
+
+If `--data-dir` is omitted, the backend resolves the input directory with the same priority as eCAL tracing output paths:
+
+1. `ECAL_TRACE_DIR`
+2. `ECAL_DATA/traces`
+3. `~/.ecal`, which corresponds to the path where `ecal.yaml` is loaded, preferring `~/.ecal/traces` when present
+
+If none of these are available, the backend exits with an error and asks for one of them to be configured.
+
+Then run:
 
 ```bash
 source .venv/bin/activate
 ecal-tracing
-```
-
-To read from a different directory, pass `--data-dir`:
-
-```bash
-ecal-tracing --data-dir path/to/your/dir
 ```
 
 Traces will be exported to Jaeger via OTLP HTTP on port 4318.

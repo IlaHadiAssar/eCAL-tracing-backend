@@ -1,12 +1,12 @@
 import os
 
-from .parser import Parser, resolve_data_dir
+from .parser import Parser, resolve_data_dir, resolve_default_data_dir
 
 
-def detect_parser(data_dir: str) -> Parser:
+def detect_parser(data_dir: str | None = None) -> Parser:
     from .parser_jsonl import ParserJsonl
 
-    resolved_data_dir = resolve_data_dir(data_dir)
+    resolved_data_dir = resolve_data_dir(data_dir) if data_dir is not None else resolve_default_data_dir()
 
     _parsers: dict[str, type[Parser]] = {
         ParserJsonl(resolved_data_dir).file_extension: ParserJsonl,

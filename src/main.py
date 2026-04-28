@@ -7,15 +7,16 @@ from .parser import detect_parser
 from .context_propagator import ContextPropagator
 from .exporting import create_tracer_groups, export
 
-DEFAULT_DATA_DIR = "~/.ecal/traces"
-
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     cli_parser = argparse.ArgumentParser(description="Export eCAL tracing data to OpenTelemetry")
     cli_parser.add_argument(
         "--data-dir",
-        default=DEFAULT_DATA_DIR,
-        help="Directory containing eCAL tracing data files (default: %(default)s)",
+        default=None,
+        help=(
+            "Directory containing eCAL tracing data files. Overrides the eCAL lookup "
+            "order: ECAL_TRACE_DIR, ECAL_DATA/traces, ~/.ecal[/traces]."
+        ),
     )
     return cli_parser.parse_args(argv)
 
@@ -25,6 +26,7 @@ def main(argv: Sequence[str] | None = None):
 
     # parse -> propagate -> export
     data_parser = detect_parser(args.data_dir)
+    print(f"Loading trace files from {data_parser.data_dir}")
     spans = data_parser.load_spans()
     metadata = data_parser.load_metadata()
 

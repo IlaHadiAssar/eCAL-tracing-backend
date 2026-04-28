@@ -6,10 +6,55 @@ from typing import List
 from ..datatypes import SpanData, STopicMetadata
 
 SUPPORTED_TRACING_VERSIONS = {"1.0.0"}
+ECAL_CONFIG_DIR = "~/.ecal"
 
 
 def resolve_data_dir(data_dir: str) -> str:
     return os.path.abspath(os.path.expanduser(data_dir))
+
+
+def _candidate_data_dirs(data_dir: str) -> List[str]:
+    resolved_data_dir = resolve_data_dir(data_dir)
+    if os.path.basename(os.path.normpath(resolved_data_dir)) == "traces":
+        return [resolved_data_dir]
+    return [os.path.join(resolved_data_dir, "traces"), resolved_data_dir]
+
+
+def resolve_traces_subdir(data_dir: str) -> str:
+    resolved_data_dir = resolve_data_dir(data_dir)
+    if os.path.basename(os.path.normpath(resolved_data_dir)) == "traces":
+        return resolved_data_dir
+    return os.path.join(resolved_data_dir, "traces")
+
+
+def _select_data_dir(candidates: List[str]) -> str:
+    for candidate in candidates:
+        if os.path.isdir(candidate):
+            return candidate
+    return candidates[0]
+
+
+def resolve_ecal_config_dir() -> str:
+    return resolve_data_dir(ECAL_CONFIG_DIR)
+
+
+def resolve_default_data_dir() -> str:
+    trace_dir = os.getenv("ECAL_TRACE_DIR")
+    if trace_dir:
+        return resolve_data_dir(trace_dir)
+
+    ecal_data_dir = os.getenv("ECAL_DATA")
+    if ecal_data_dir:
+        return resolve_traces_subdir(ecal_data_dir)
+
+    ecal_config_dir = resolve_ecal_config_dir()
+    if os.path.isfile(os.path.join(ecal_config_dir, "ecal.yaml")):
+        return _select_data_dir(_candidate_data_dirs(ecal_config_dir))
+
+    raise FileNotFoundError(
+        "No eCAL tracing data directory configured. Use --data-dir, set ECAL_TRACE_DIR, "
+        "set ECAL_DATA, or ensure ~/.ecal/ecal.yaml exists."
+    )
 
 
 class Parser(ABC):
