@@ -1,6 +1,8 @@
 .venv/
 src/ecal_tracing_backend.egg-info
 __pycache__
+build/
+dist/
 data/*
 ecal_tracing_backend.egg-info
 

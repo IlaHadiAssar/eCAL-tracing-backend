@@ -2,6 +2,30 @@
 
 OpenTelemetry tracing backend for eCAL publisher/subscriber spans. Reads span data from JSON files and exports traces to Jaeger with proper context propagation (publish → receive → callback).
 
+## Install
+
+For a normal local install:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install .
+```
+
+For development:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .[dev]
+```
+
+If you prefer installing the CLI into an isolated user environment, `pipx` also works:
+
+```bash
+pipx install .
+```
+
 ## Setup (Ubuntu)
 
 ### Prerequisites
@@ -16,7 +40,7 @@ sudo apt install python3 python3-venv docker.io docker-compose
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e .[dev]
 ```
 
 ### Start Jaeger
@@ -51,4 +75,31 @@ source .venv/bin/activate
 ecal-tracing
 ```
 
+You can also run the installed package as a module:
+
+```bash
+source .venv/bin/activate
+python -m ecal_tracing_backend
+```
+
 Traces will be exported to Jaeger via OTLP HTTP on port 4318.
+
+## Build and Release
+
+GitHub Actions builds a source distribution and wheel on every push and pull request.
+
+To cut a release, create and push a version tag that starts with `v`, for example:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+That tag triggers the release job, which attaches the built `dist/*` artifacts to a GitHub release with generated notes.
+
+If you only want to verify packaging, you can run the same command locally:
+
+```bash
+python -m build
+```
+
