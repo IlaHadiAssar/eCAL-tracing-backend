@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ecal-tracing-backend"
+version = "0.1.0"
+description = "OpenTelemetry tracing backend for eCAL publisher/subscriber spans"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "adr-tools-python",
+]
+
+[tool.setuptools.packages.find]
+include = ["ecal_tracing_backend*"]
+
+[project.scripts]
+ecal-tracing = "ecal_tracing_backend.main:main"

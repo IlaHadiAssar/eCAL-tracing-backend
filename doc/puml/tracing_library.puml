@@ -1,0 +1,220 @@
+@startuml eCAL Tracing Library
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+title eCAL Tracing Subsystem
+
+package "Configuration" <<Rectangle>> {
+    class "eCAL::Tracing::Configuration" as Config {
+        + enabled : bool = false
+    }
+}
+
+package "eCAL::tracing" <<Frame>> {
+
+    together {
+        enum operation_type {
+            send = 0
+            receive = 1
+            callback_execution = 2
+        }
+
+        enum topic_direction {
+            publisher = 0
+            subscriber = 1
+        }
+
+        enum eTracingLayerType <<uint64_t>> {
+            tl_trace_none = 0
+            tl_trace_shm  = 1
+            tl_trace_udp  = 2
+            tl_trace_tcp  = 4
+            tl_trace_shm_udp = 3
+            tl_trace_shm_tcp = 5
+            tl_trace_udp_tcp = 6
+            tl_trace_all  = 7
+        }
+    }
+
+    together {
+        class STopicMetadata <<struct>> {
+            + tracing_version : string = "1.0.0"
+            + entity_id : uint64_t
+            + process_id : int32_t
+            + host_name : string
+            + topic_name : string
+            + encoding : string
+            + type_name : string
+            + direction : topic_direction
+        }
+
+        class SPublisherSpanData <<struct>> {
+            + op_type : operation_type
+            + entity_id : uint64_t
+            + process_id : uint64_t
+            + payload_size : size_t
+            + clock : long long
+            + layer : uint64_t
+            + start_ns : long long
+            + end_ns : long long
+        }
+
+        class SSubscriberSpanData <<struct>> {
+            + op_type : operation_type
+            + entity_id : uint64_t
+            + topic_id : uint64_t
+            + process_id : uint64_t
+            + payload_size : size_t
+            + clock : long long
+            + layer : uint64_t
+            + start_ns : long long
+            + end_ns : long long
+        }
+    }
+
+    class "SpanDataVariant" as Variant <<variant>> {
+        SPublisherSpanData
+        SSubscriberSpanData
+    }
+
+    together {
+        class CPublisherSpan <<RAII>> {
+            - data_ : SPublisherSpanData
+            --
+            + CPublisherSpan(topic_id, clock, layer, payload_size, op_type)
+            + ~CPublisherSpan()
+            __ deleted __
+            copy / move operations
+        }
+
+        class CSubscriberSpan <<RAII>> {
+            - data_ : SSubscriberSpanData
+            --
+            + CSubscriberSpan(entity_id, topic_info, clock, layer, payload_size, op_type)
+            + ~CSubscriberSpan()
+            __ deleted __
+            copy / move operations
+        }
+    }
+
+    abstract class TraceProvider {
+        + {static} Create(config : Configuration) : shared_ptr<TraceProvider>
+        + {abstract} WriteSpan(span_data : SpanDataVariant) : void
+        + {abstract} WriteMetadata(metadata : STopicMetadata) : void
+        __ deleted __
+        copy / move operations
+    }
+
+    class CTraceProviderDefault {
+        - batch_size_ : atomic<size_t>
+        - span_buffer_ : vector<SpanDataVariant>
+        - thread_mutex : mutex
+        - write_cv_ : condition_variable
+        - stop_thread_ : bool
+        - writer_thread_ : thread
+        - writer_ : unique_ptr<TracingWriter>
+        --
+        + {static} Create(writer, batch_size) : shared_ptr<CTraceProviderDefault>
+        + WriteSpan(span_data : SpanDataVariant) : void
+        + WriteMetadata(metadata : STopicMetadata) : void
+        + ~CTraceProviderDefault()
+        - CTraceProviderDefault(writer, batch_size)
+        - WriterThreadLoop() : void
+    }
+
+    class CNoOpTraceProvider {
+        + WriteSpan(span_data : SpanDataVariant) : void  {empty}
+        + WriteMetadata(metadata : STopicMetadata) : void  {empty}
+    }
+
+    abstract class TracingWriter {
+        + {abstract} WriteSpansToFile(batch : vector<SpanDataVariant>) : void
+        + {abstract} WriteMetadataToFile(metadata : STopicMetadata) : void
+    }
+
+    class CTracingWriterJSONL {
+        - spans_mutex_ : mutex
+        - metadata_mutex_ : mutex
+        - timestamp_ : string
+        - trace_dir_ : string
+        --
+        + CTracingWriterJSONL()
+        + WriteSpansToFile(batch : vector<SpanDataVariant>) : void
+        + WriteMetadataToFile(metadata : STopicMetadata) : void
+        + GetSpansFilePath() : string
+        + GetTopicMetadataFilePath() : string
+    }
+}
+
+package "Global Accessors" <<Rectangle>> {
+    class "ecal_global_accessors" as Globals <<module>> {
+        - g_trace_provider_instance : shared_ptr<TraceProvider>
+        --
+        + g_trace_provider() : shared_ptr<TraceProvider>
+        + InitializeTracing(config : Configuration) : void
+        + ResetTracing() : void
+    }
+}
+
+'' ── Inheritance ──
+CTraceProviderDefault -up-|> TraceProvider
+CNoOpTraceProvider -up-|> TraceProvider
+CTracingWriterJSONL -up-|> TracingWriter
+
+'' ── Composition / Aggregation ──
+CTraceProviderDefault o-right-> TracingWriter : writer_
+CTraceProviderDefault *--> Variant : span_buffer_
+
+'' ── Dependencies ──
+CPublisherSpan ..> SPublisherSpanData : creates
+CSubscriberSpan ..> SSubscriberSpanData : creates
+CPublisherSpan ..> TraceProvider : submits span on destruction
+CSubscriberSpan ..> TraceProvider : submits span on destruction
+
+TraceProvider ..> Variant : uses
+TraceProvider ..> STopicMetadata : uses
+TracingWriter ..> Variant : writes
+TracingWriter ..> STopicMetadata : writes
+
+STopicMetadata --> topic_direction
+SPublisherSpanData --> operation_type
+SSubscriberSpanData --> operation_type
+
+Variant ..> SPublisherSpanData
+Variant ..> SSubscriberSpanData
+
+TraceProvider::Create ..> Config : reads
+TraceProvider::Create ..> CTraceProviderDefault : creates if enabled
+TraceProvider::Create ..> CNoOpTraceProvider : creates if disabled
+CTraceProviderDefault::Create ..> CTracingWriterJSONL : default writer
+
+Globals --> TraceProvider : holds instance
+
+note right of CPublisherSpan
+  RAII: captures start_ns on construction,
+  end_ns on destruction, then submits span
+  via g_trace_provider()->WriteSpan()
+end note
+
+note right of CTraceProviderDefault
+  Batches spans in span_buffer_.
+  A background writer_thread_ flushes
+  when batch_size_ is reached.
+  Metadata is written immediately.
+end note
+
+note bottom of CTracingWriterJSONL
+  Output files:
+    ecal_spans_<PID>_<TS>.jsonl
+    ecal_topic_metadata_<PID>_<TS>.jsonl
+  Uses nlohmann::json for serialization.
+  Trace dir resolved from env vars / config.
+end note
+
+note bottom of CNoOpTraceProvider
+  All methods are empty.
+  Used when tracing is disabled.
+end note
+
+@enduml
