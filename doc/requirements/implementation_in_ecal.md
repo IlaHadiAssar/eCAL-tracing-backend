@@ -45,4 +45,3 @@ What problem does this solve? Who is impacted?
 | NFR-6 | Should | The system should run on Windows and Unix-like operating systems. |
 
 ## 6. More information
-

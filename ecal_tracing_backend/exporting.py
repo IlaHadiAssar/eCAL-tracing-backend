@@ -45,4 +45,3 @@ def export(tracer_providers: list) -> None:
     for tp in tracer_providers:
         tp.shutdown()
     print("Export completed")
-

@@ -10,7 +10,7 @@ What problem does this solve? Who is impacted?
 - Clear, measurable outcome 1
 - Outcome 2
 
-## 4. Non-goals 
+## 4. Non-goals
 - What this feature explicitly will NOT do
 
 ## 5. Requirements
@@ -29,4 +29,3 @@ What problem does this solve? Who is impacted?
 - UX constraints (if applicable)
 
 ## More information
-
