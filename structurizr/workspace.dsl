@@ -46,7 +46,7 @@ workspace "eCAl Tracing System" "Description" {
                 context_propagator -> parser "get deserialized spans" ""
                 exporter -> context_propagator "get OpenTelemetry formatted spans" ""
             }
-                
+
             storage = container "Data directory" {
             description "storage for span/metadata files"
             technology "directory"
@@ -81,7 +81,7 @@ workspace "eCAl Tracing System" "Description" {
         user -> ecal_tracing "Runs exporter on demand" ""
         user -> jaeger "Views" ""
         ecal_tracing.tracing_backend.exporter -> jaeger "Exports traces" ""
-        
+
     }
 
     views {
