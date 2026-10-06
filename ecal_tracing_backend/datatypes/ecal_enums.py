@@ -22,4 +22,3 @@ class TracingLayerType(IntEnum):
     SHM_TCP = 5
     UDP_TCP = 6
     ALL = 7
-

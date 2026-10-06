@@ -11,7 +11,7 @@ Accepted
 
 ## Context and Problem Statement
 
-There are no architecture diagrams yet 
+There are no architecture diagrams yet
 
 ## Considered Options
 
